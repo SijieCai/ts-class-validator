@@ -18,3 +18,5 @@ test('is.sync validate function get correct params', () => {
   }).validate(1, 2);
 })
 
+test('is.contains', () => { });
+test('is.after', () => { });

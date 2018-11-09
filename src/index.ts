@@ -107,11 +107,7 @@ interface NumberValidator {
 
 interface StringValidator {
 
-  // check if the string contains the seed.
-  contains(seed: string): Rule;
 
-  // check if the string is a date that's after the specified date (true means after now).
-  after(date?: string): Rule;
 
   // check if the string contains only letters (a-zA-Z). Locale is one of ['ar', 'ar-AE', 'ar-BH', 'ar-DZ', 'ar-EG',
   // 'ar-IQ', 'ar-JO', 'ar-KW', 'ar-LB', 'ar-LY', 'ar-MA', 'ar-QA', 'ar-QM', 'ar-SA', 'ar-SD', 'ar-SY', 'ar-TN', 'ar-YE',
@@ -275,20 +271,20 @@ interface IValidateTarget extends CommonValidator, NumberValidator, ClassValidat
   func(f: (target: any, ctx: any) => Promise<boolean> | boolean): Rule
 }
 
-type ValidateFunction = (value: any, ctx?: any) => boolean | Promise<boolean>;
-
+type RuleValidate = (target: object, key: string) => boolean | Promise<boolean>;
+type RuleMessage = string | ((target: object, key: string) => string);
 export class Rule {
-  private _validate: ValidateFunction;
+  private _validate: RuleValidate;
   private _async: boolean;
-  private _message: string;
-  private _condition: (o: any) => boolean
+  private _message: RuleMessage;
+  private _condition: (o: any) => boolean;
   constructor(
-    validate: ValidateFunction,
-    isAsync: boolean = false,
-    message?: string,
+    validate: RuleValidate,
+    isAsync?: boolean = false,
+    message?: RuleMessage,
     condition?: (o: any) => boolean
   ) {
-    if(typeof validate !== 'function') {
+    if (typeof validate !== 'function') {
       throw new Error('validate must be function type')
     }
     this._validate = validate;
@@ -300,11 +296,11 @@ export class Rule {
   get isAsync(): boolean { return this._async; }
 
   // Validate value with current rule, ctx normally is the class instance
-  validate(value: any, ctx?: any): boolean | Promise<boolean> {
-    return this._validate(value, ctx);
+  validate(target: object, key: string): boolean | Promise<boolean> {
+    return this._validate(target, key);
   }
   // copy a new Rule with specified message
-  message(message: string): Rule {
+  message(message: RuleMessage): Rule {
     return new Rule(this._validate, this._async, message, this._condition);
   }
   // copy a new Rule with specified onlyIf condition
@@ -314,11 +310,29 @@ export class Rule {
 
 }
 class IS {
-  sync(f: ValidateFunction): Rule {
+  sync(f: RuleValidate): Rule {
     return new Rule(f);
   }
-  async(f: ValidateFunction): Rule {
+  async(f: RuleValidate): Rule {
     return new Rule(f, true);
+  }
+
+  // check if the string contains the seed.
+  contains(seed: string): Rule {
+    return new Rule(
+      (target, key) => Validator.contains(target[key], seed),
+      false,
+      (target, key) => ''
+    );
+  }
+
+  // check if the string is a date that's after the specified date (true means after now).
+  after(date?: string): Rule {
+    return new Rule(
+      (target, key) => Validator.isAfter(target[key], date),
+      false,
+      (target, key) => ''
+    );
   }
 }
 
