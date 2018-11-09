@@ -1,0 +1,42 @@
+{
+  "name": "ts-class-validator",
+  "version": "0.1.0",
+  "description": "Declarative typescript validator with nested logic operator support.",
+  "main": "dist/index.js",
+  "scripts": {
+    "test": "jest"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/sijiecai/ts-class-validator.git"
+  },
+  "keywords": [
+    "validator",
+    "validation",
+    "logical operator",
+    "declarative",
+    "typescript",
+    "reflection",
+    "decorator",
+    "metadata",
+    "security"
+  ],
+  "author": "SijieCai",
+  "email": "sijie.cai@qq.com",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/sijiecai/ts-class-validator/issues"
+  },
+  "homepage": "https://github.com/sijiecai/ts-class-validator#readme",
+  "dependencies": {
+    "reflect-metadata": "^0.1.12",
+    "validator": "^10.8.0"
+  },
+  "devDependencies": {
+    "@types/jest": "^23.3.9",
+    "@types/validator": "^9.4.2",
+    "jest": "^23.6.0",
+    "ts-jest": "^23.10.4",
+    "typescript": "^3.1.6"
+  }
+}
