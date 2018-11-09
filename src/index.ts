@@ -14,11 +14,6 @@ interface Addtional {
   each?: boolean;
 }
 
-interface Rule {
-  validate(value: any): boolean;
-  message(msg: string): Rule;
-  onlyIf(condition: (o: any) => boolean): Rule;
-}
 
 interface RuleCreator {
 
@@ -276,12 +271,56 @@ interface ClassValidator {
   type(TClass: new () => any, fieldsPattern?: string): Rule;
 }
 
-interface ValidateTarget extends CommonValidator, NumberValidator, StringValidator, ClassValidator { 
-  func(f: (target: any, ctx: any)=> Promise<boolean> | boolean): Rule
+interface IValidateTarget extends CommonValidator, NumberValidator, ClassValidator {
+  func(f: (target: any, ctx: any) => Promise<boolean> | boolean): Rule
 }
 
+type ValidateFunction = (value: any, ctx?: any) => boolean | Promise<boolean>;
 
+export class Rule {
+  private _validate: ValidateFunction;
+  private _async: boolean;
+  private _message: string;
+  private _condition: (o: any) => boolean
+  constructor(
+    validate: ValidateFunction,
+    isAsync: boolean = false,
+    message?: string,
+    condition?: (o: any) => boolean
+  ) {
+    if(typeof validate !== 'function') {
+      throw new Error('validate must be function type')
+    }
+    this._validate = validate;
+    this._async = isAsync;
+    this._message = message;
+    this._condition = condition;
+  }
 
+  get isAsync(): boolean { return this._async; }
+
+  // Validate value with current rule, ctx normally is the class instance
+  validate(value: any, ctx?: any): boolean | Promise<boolean> {
+    return this._validate(value, ctx);
+  }
+  // copy a new Rule with specified message
+  message(message: string): Rule {
+    return new Rule(this._validate, this._async, message, this._condition);
+  }
+  // copy a new Rule with specified onlyIf condition
+  onlyIf(condition: (o: any) => boolean): Rule {
+    return new Rule(this._validate, this._async, this._message, condition)
+  }
+
+}
+class IS {
+  sync(f: ValidateFunction): Rule {
+    return new Rule(f);
+  }
+  async(f: ValidateFunction): Rule {
+    return new Rule(f, true);
+  }
+}
 
 export function validate(...rules: Array<Rule | Rule[]>) {
   return function (target: any, key: string | symbol) {
@@ -291,7 +330,7 @@ export function validate(...rules: Array<Rule | Rule[]>) {
   }
 }
 
-validate.each = function(...rules: Array<Rule | Rule[]>) {
+validate.each = function (...rules: Array<Rule | Rule[]>) {
   return function (target: any, key: string | symbol) {
     target.__validators = target.__validators || [];
     target.__validators.push(key);
@@ -302,7 +341,8 @@ validate.each = function(...rules: Array<Rule | Rule[]>) {
 export function and(...rules: Array<Rule | Rule[]>): Rule { return null; }
 export function or(...rules: Array<Rule | Rule[]>): Rule { return null; }
 
-export declare var is: ValidateTarget;
+export declare var is: IS;
+is = new IS();
 
 
 export function mixins(...args: any[]) {
