@@ -107,7 +107,11 @@ interface NumberValidator {
 
 interface StringValidator {
 
+  // check if the string contains the seed.
+  contains(seed: string): Rule;
 
+  // check if the string is a date that's after the specified date (true means after now).
+  after(date?: string): Rule;
 
   // check if the string contains only letters (a-zA-Z). Locale is one of ['ar', 'ar-AE', 'ar-BH', 'ar-DZ', 'ar-EG',
   // 'ar-IQ', 'ar-JO', 'ar-KW', 'ar-LB', 'ar-LY', 'ar-MA', 'ar-QA', 'ar-QM', 'ar-SA', 'ar-SD', 'ar-SY', 'ar-TN', 'ar-YE',
@@ -280,7 +284,7 @@ export class Rule {
   private _condition: (o: any) => boolean;
   constructor(
     validate: RuleValidate,
-    isAsync?: boolean = false,
+    isAsync: boolean = false,
     message?: RuleMessage,
     condition?: (o: any) => boolean
   ) {
@@ -309,7 +313,8 @@ export class Rule {
   }
 
 }
-class IS {
+
+class IS implements StringValidator {
   sync(f: RuleValidate): Rule {
     return new Rule(f);
   }
@@ -330,6 +335,305 @@ class IS {
   after(date?: string): Rule {
     return new Rule(
       (target, key) => Validator.isAfter(target[key], date),
+      false,
+      (target, key) => ''
+    );
+  }
+  alpha(locale?: ValidatorJS.AlphaLocale): Rule {
+    return new Rule(
+      (target, key) => Validator.isAlpha(target[key], locale),
+      false,
+      (target, key) => ''
+    );
+  }
+  alphanumeric(locale?: ValidatorJS.AlphaLocale): Rule {
+    return new Rule(
+      (target, key) => Validator.isAlphanumeric(target[key], locale),
+      false,
+      (target, key) => ''
+    );
+  }
+  ascii(): Rule {
+    return new Rule(
+      (target, key) => Validator.isAscii(target[key]),
+      false,
+      (target, key) => ''
+    );
+  }
+  base64(): Rule {
+    return new Rule(
+      (target, key) => Validator.isBase64(target[key]),
+      false,
+      (target, key) => ''
+    );
+  }
+  before(date?: string): Rule {
+    return new Rule(
+      (target, key) => Validator.isBefore(target[key], date),
+      false,
+      (target, key) => ''
+    );
+  }
+  byteLength(options: ValidatorJS.IsByteLengthOptions): Rule;
+  byteLength(min: number, max?: number): Rule;
+  byteLength(min: any, max?: any): Rule {
+    return new Rule(
+      (target, key) => Validator.isByteLength(target[key], min, max),
+      false,
+      (target, key) => ''
+    );
+
+  }
+  creditCard(): Rule {
+    return new Rule(
+      (target, key) => Validator.isCreditCard(target[key]),
+      false,
+      (target, key) => ''
+    );
+  }
+  currency(options?: ValidatorJS.IsCurrencyOptions): Rule {
+    return new Rule(
+      (target, key) => Validator.isCurrency(target[key], options),
+      false,
+      (target, key) => ''
+    );
+  }
+  dataURI(): Rule {
+    return new Rule(
+      (target, key) => Validator.isDataURI(target[key]),
+      false,
+      (target, key) => ''
+    );
+  }
+  email(options?: ValidatorJS.IsEmailOptions): Rule {
+    return new Rule(
+      (target, key) => Validator.isEmail(target[key], options),
+      false,
+      (target, key) => ''
+    );
+  }
+  FQDN(options?: ValidatorJS.IsFQDNOptions): Rule {
+    return new Rule(
+      (target, key) => Validator.isFQDN(target[key], options),
+      false,
+      (target, key) => ''
+    );
+  }
+  fullWidth(): Rule {
+    return new Rule(
+      (target, key) => Validator.isFullWidth(target[key]),
+      false,
+      (target, key) => ''
+    );
+  }
+  halfWidth(): Rule {
+    return new Rule(
+      (target, key) => Validator.isHalfWidth(target[key]),
+      false,
+      (target, key) => ''
+    );
+  }
+  hash(algorithm: ValidatorJS.HashAlgorithm): Rule {
+    return new Rule(
+      (target, key) => Validator.isHash(target[key], algorithm),
+      false,
+      (target, key) => ''
+    );
+  }
+  hexColor(): Rule {
+    return new Rule(
+      (target, key) => Validator.isHexColor(target[key]),
+      false,
+      (target, key) => ''
+    );
+  }
+  hexadecimal(): Rule {
+    return new Rule(
+      (target, key) => Validator.isHexadecimal(target[key]),
+      false,
+      (target, key) => ''
+    );
+  }
+  IP(version?: number): Rule {
+    return new Rule(
+      (target, key) => Validator.isIP(target[key], version),
+      false,
+      (target, key) => ''
+    );
+  }
+  ISBN(version?: number): Rule {
+    return new Rule(
+      (target, key) => Validator.isISBN(target[key], version),
+      false,
+      (target, key) => ''
+    );
+  }
+  ISSN(options?: ValidatorJS.IsISSNOptions): Rule {
+    return new Rule(
+      (target, key) => Validator.isISSN(target[key], options),
+      false,
+      (target, key) => ''
+    );
+  }
+  ISIN(): Rule {
+    return new Rule(
+      (target, key) => Validator.isISIN(target[key]),
+      false,
+      (target, key) => ''
+    );
+  }
+  ISO8601(): Rule {
+    return new Rule(
+      (target, key) => Validator.isISO8601(target[key]),
+      false,
+      (target, key) => ''
+    );
+  }
+  ISO31661Alpha2(): Rule {
+    return new Rule(
+      (target, key) => Validator.isISO31661Alpha2(target[key]),
+      false,
+      (target, key) => ''
+    );
+  }
+  ISRC(): Rule {
+    return new Rule(
+      (target, key) => Validator.isISRC(target[key]),
+      false,
+      (target, key) => ''
+    );
+  }
+  JSON(): Rule {
+    return new Rule(
+      (target, key) => Validator.isJSON(target[key]),
+      false,
+      (target, key) => ''
+    );
+  }
+  latLong(): Rule {
+    return new Rule(
+      (target, key) => Validator.isLatLong(target[key]),
+      false,
+      (target, key) => ''
+    );
+  }
+  length(options: ValidatorJS.IsLengthOptions): Rule;
+  length(min: number, max?: number): Rule;
+  length(min: any, max?: any): Rule {
+    return new Rule(
+      (target, key) => Validator.isLength(target[key], min, max),
+      false,
+      (target, key) => ''
+    );
+  }
+  lowercase(): Rule {
+    return new Rule(
+      (target, key) => Validator.isLowercase(target[key]),
+      false,
+      (target, key) => ''
+    );
+  }
+  MACAddress(): Rule {
+    return new Rule(
+      (target, key) => Validator.isMACAddress(target[key]),
+      false,
+      (target, key) => ''
+    );
+  }
+  MD5(): Rule {
+    return new Rule(
+      (target, key) => Validator.isMD5(target[key]),
+      false,
+      (target, key) => ''
+    );
+  }
+  mimeType(): Rule {
+    return new Rule(
+      (target, key) => Validator.isMimeType(target[key]),
+      false,
+      (target, key) => ''
+    );
+  }
+  mobilePhone(locale: ValidatorJS.MobilePhoneLocale, options?: ValidatorJS.IsMobilePhoneOptions): Rule {
+    return new Rule(
+      (target, key) => Validator.isMobilePhone(target[key], locale, options),
+      false,
+      (target, key) => ''
+    );
+  }
+  mongoId(): Rule {
+    return new Rule(
+      (target, key) => Validator.isMongoId(target[key]),
+      false,
+      (target, key) => ''
+    );
+  }
+  multibyte(): Rule {
+    return new Rule(
+      (target, key) => Validator.isMultibyte(target[key]),
+      false,
+      (target, key) => ''
+    );
+  }
+  numeric(options?: ValidatorJS.IsNumericOptions): Rule {
+    return new Rule(
+      (target, key) => Validator.isNumeric(target[key], options),
+      false,
+      (target, key) => ''
+    );
+  }
+  postalCode(locale: ValidatorJS.PostalCodeLocale): Rule {
+    return new Rule(
+      (target, key) => Validator.isPostalCode(target[key], locale),
+      false,
+      (target, key) => ''
+    );
+  }
+  surrogatePair(): Rule {
+    return new Rule(
+      (target, key) => Validator.isSurrogatePair(target[key]),
+      false,
+      (target, key) => ''
+    );
+  }
+  URL(options?: ValidatorJS.IsURLOptions): Rule {
+    return new Rule(
+      (target, key) => Validator.isURL(target[key], options),
+      false,
+      (target, key) => ''
+    );
+  }
+  UUID(version?: 3 | 4 | 5 | "3" | "4" | "5" | "all"): Rule {
+    return new Rule(
+      (target, key) => Validator.isUUID(target[key], version),
+      false,
+      (target, key) => ''
+    );
+  }
+  uppercase(): Rule {
+    return new Rule(
+      (target, key) => Validator.isUppercase(target[key]),
+      false,
+      (target, key) => ''
+    );
+  }
+  variableWidth(): Rule {
+    return new Rule(
+      (target, key) => Validator.isVariableWidth(target[key]),
+      false,
+      (target, key) => ''
+    );
+  }
+  whitelisted(chars: string | string[]): Rule {
+    return new Rule(
+      (target, key) => Validator.isWhitelisted(target[key], chars),
+      false,
+      (target, key) => ''
+    );
+  }
+  matches(pattern: string | RegExp, modifiers?: string): Rule {
+    return new Rule(
+      (target, key) => Validator.matches(target[key], pattern, modifiers),
       false,
       (target, key) => ''
     );

@@ -15,8 +15,10 @@ test('is.sync validate function get correct params', () => {
     expect(a).toBe(1);
     expect(b).toBe(2);
     return true;
-  }).validate(1, 2);
+  }) 
 })
 
-test('is.contains', () => { });
+test('is.contains', () => { 
+  is.after()
+});
 test('is.after', () => { });
