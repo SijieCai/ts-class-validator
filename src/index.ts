@@ -1,667 +1,659 @@
 import 'reflect-metadata';
 import * as Validator from 'validator';
 
-interface ValidatorOptions {
-  message?: string;
-  context?: any;
-}
+const METADATA_KEY = 'validate';
 
-type ValidatorSwitcher = boolean | [boolean, ValidatorOptions?];
-type ValidatorSwitcherWithParams<P> = P | [P, ValidatorOptions?]
-
-interface Addtional {
-  message?: string | Function,
-  each?: boolean;
-}
-
-
-interface RuleCreator {
-
-  // **************
-  // * Validators *
-  // **************
-  readonly not: RuleCreator;
-
-
-  // **************
-  // * Sanitizers *
-  // **************
-
-  // remove characters that appear in the blacklist. The characters are used in a RegExp and so you will need
-  // to escape some chars, e.g. blacklist(input, '\\[\\]').
-  blacklist(chars: string): string;
-
-  // replace <, >, &, ', " and / with HTML entities.
-  escape(): string;
-
-  // replaces HTML encoded entities with <, >, &, ', " and /.
-  unescape(): string;
-
-  // trim characters from the left-side of the input.
-  ltrim(chars?: string): string;
-
-  // canonicalize an email address.
-  normalizeEmail(options?: ValidatorJS.NormalizeEmailOptions): string | false;
-
-  // trim characters from the right-side of the input.
-  rtrim(chars?: string): string;
-
-  // remove characters with a numerical value < 32 and 127, mostly control characters. If keep_new_lines is true,
-  // newline characters are preserved (\n and \r, hex 0xA and 0xD). Unicode-safe in JavaScript.
-  stripLow(keep_new_lines?: boolean): string;
-
-  // convert the input to a boolean. Everything except for '0', 'false' and '' returns true. In strict mode only '1'
-  // and 'true' return true.
-  toBoolean(strict?: boolean): boolean;
-
-  // convert the input to a date, or null if the input is not a date.
-  toDate(): Date; // Date or null
-
-  // convert the input to a float, or NaN if the input is not a float.
-  toFloat(): number; // number or NaN
-
-  // convert the input to an integer, or NaN if the input is not an integer.
-  toInt(radix?: number): number; // number or NaN
-
-  // trim characters (whitespace by default) from both sides of the input.
-  trim(chars?: string): string;
-
-  // remove characters that do not appear in the whitelist. The characters are used in a RegExp and so you will
-  // need to escape some chars, e.g. whitelist(input, '\\[\\]').
-  whitelist(chars: string): string;
-
-  toString(input: any | any[]): string;
-}
-
-interface CommonValidator {
-  // check if the string matches the comparison.
-  equals(comparison: any): Rule;
-
-  not: this;
-  // check if the string has a length of zero or undefined.
-  empty(): Rule;
-  required(): Rule;
-
-  // check if the string is in a array of allowed values.
-  in(values: any[]): Rule;
-
-}
-
-interface NumberValidator {
-  // check if the string represents a decimal number, such as 0.1, .3, 1.1, 1.00003, 4.0, etc.
-  decimal(options?: ValidatorJS.IsDecimalOptions): Rule;
-
-  // check if the string is a number that's divisible by another.
-  divisibleBy(number: number): Rule;
-
-
-  // check if the string is a float.
-  float(options?: ValidatorJS.IsFloatOptions): Rule;
-
-  // check if the string is an integer.
-  int(options?: ValidatorJS.IsIntOptions): Rule;
-
-  // check if the string is a valid port number.
-  port(): Rule;
-}
-
-interface StringValidator {
-
-  // check if the string contains the seed.
-  contains(seed: string): Rule;
-
-  // check if the string is a date that's after the specified date (true means after now).
-  after(date?: string): Rule;
-
-  // check if the string contains only letters (a-zA-Z). Locale is one of ['ar', 'ar-AE', 'ar-BH', 'ar-DZ', 'ar-EG',
-  // 'ar-IQ', 'ar-JO', 'ar-KW', 'ar-LB', 'ar-LY', 'ar-MA', 'ar-QA', 'ar-QM', 'ar-SA', 'ar-SD', 'ar-SY', 'ar-TN', 'ar-YE',
-  // 'bg-BG', 'cs-CZ', 'da-DK', 'de-DE', 'el-GR', 'en-AU', 'en-GB', 'en-HK', 'en-IN', 'en-NZ', 'en-US', 'en-ZA', 'en-ZM',
-  // 'es-ES', 'fr-FR', 'hu-HU', 'it-IT', 'nb-NO', 'nl-NL', 'nn-NO', 'pl-PL', 'pt-BR', 'pt-PT', 'ru-RU', 'sk-SK', 'sr-RS',
-  // 'sr-RS@latin', 'sv-SE', 'tr-TR', 'uk-UA']) and defaults to en-US
-  alpha(locale?: ValidatorJS.AlphaLocale): Rule;
-
-  // check if the string contains only letters and numbers. Locale is one of ['ar', 'ar-AE', 'ar-BH', 'ar-DZ', 'ar-EG',
-  // 'ar-IQ', 'ar-JO', 'ar-KW', 'ar-LB', 'ar-LY', 'ar-MA', 'ar-QA', 'ar-QM', 'ar-SA', 'ar-SD', 'ar-SY', 'ar-TN', 'ar-YE',
-  // 'bg-BG', 'cs-CZ', 'da-DK', 'de-DE', 'el-GR', 'en-AU', 'en-GB', 'en-HK', 'en-IN', 'en-NZ', 'en-US', 'en-ZA', 'en-ZM',
-  // 'es-ES', 'fr-FR', 'hu-HU', 'it-IT', 'nb-NO', 'nl-NL', 'nn-NO', 'pl-PL', 'pt-BR', 'pt-PT', 'ru-RU', 'sk-SK', 'sr-RS',
-  // 'sr-RS@latin', 'sv-SE', 'tr-TR', 'uk-UA']) and defaults to en-US
-  alphanumeric(locale?: ValidatorJS.AlphanumericLocale): Rule;
-
-
-  // check if the string contains ASCII chars only.
-  ascii(): Rule;
-
-  // check if a string is base64 encoded.
-  base64(): Rule;
-
-  // check if the string is a date that's before the specified date.
-  before(date?: string): Rule;
-
-  // check if the string's length (in bytes) falls in a range.
-  byteLength(options: ValidatorJS.IsByteLengthOptions): Rule;
-  byteLength(min: number, max?: number): Rule;
-
-  // check if the string is a credit card.
-  creditCard(): Rule;
-
-  // check if the string is a valid currency amount.
-  currency(options?: ValidatorJS.IsCurrencyOptions): Rule;
-
-  // check if the string is a data uri format (https://developer.mozilla.org/en-US/docs/Web/HTTP/data_URIs)
-  dataURI(): Rule;
-
-  // check if the string is an email.
-  email(options?: ValidatorJS.IsEmailOptions): Rule;
-
-  // check if the string is a fully qualified domain name (e.g. domain.com).
-  FQDN(options?: ValidatorJS.IsFQDNOptions): Rule;
-
-  // check if the string contains any full-width chars.
-  fullWidth(): Rule;
-
-  // check if the string contains any half-width chars.
-  halfWidth(): Rule;
-
-  // check if the string is a hash of type algorithm.
-  // Algorithm is one of ['md4', 'md5', 'sha1', 'sha256', 'sha384', 'sha512', 'ripemd128', 'ripemd160', 'tiger128',
-  // 'tiger160', 'tiger192', 'crc32', 'crc32b']
-  hash(algorithm: ValidatorJS.HashAlgorithm): Rule;
-
-  // check if the string is a hexadecimal color.
-  hexColor(): Rule;
-
-  // check if the string is a hexadecimal number.
-  hexadecimal(): Rule;
-
-  // check if the string is an IP (version 4 or 6).
-  IP(version?: number): Rule;
-
-  // check if the string is an ISBN (version 10 or 13).
-  ISBN(version?: number): Rule;
-
-  // check if the string is an ISSN (https://en.wikipedia.org/wiki/International_Standard_Serial_Number).
-  ISSN(options?: ValidatorJS.IsISSNOptions): Rule;
-
-  // check if the string is an ISIN (https://en.wikipedia.org/wiki/International_Securities_Identification_Number)
-  // (stock/security identifier).
-  ISIN(): Rule;
-
-  // check if the string is a valid ISO 8601 (https://en.wikipedia.org/wiki/ISO_8601) date.
-  ISO8601(): Rule;
-
-  // check if the string is a valid ISO 3166-1 alpha-2 (https://en.wikipedia.org/wiki/ISO_3166-1_alpha-2) officially assigned
-  // country code.
-  ISO31661Alpha2(): Rule;
-
-  // check if the string is a ISRC (https://en.wikipedia.org/wiki/International_Standard_Recording_Code).
-  ISRC(): Rule;
-
-  // check if the string is valid JSON (note: uses JSON.parse).
-  JSON(): Rule;
-
-  // check if the string is a valid latitude-longitude coordinate in the format lat,long or lat, long.
-  latLong(): Rule;
-
-  // check if the string's length falls in a range.
-  // Note: this function takes into account surrogate pairs.
-  length(options: ValidatorJS.IsLengthOptions): Rule;
-  length(min: number, max?: number): Rule;
-
-  // check if the string is lowercase.
-  lowercase(): Rule;
-
-  // check if the string is a MAC address.
-  MACAddress(): Rule;
-
-  // check if the string is a MD5 hash.
-  MD5(): Rule;
-
-  // check if the string matches to a valid MIME type (https://en.wikipedia.org/wiki/Media_type) format
-  mimeType(): Rule;
-
-  // check if the string is a mobile phone number, (locale is one of
-  // ['ar-AE', ar-DZ', 'ar-EG', 'ar-JO', 'ar-SA', 'ar-SY', 'be-BY', 'bg-BG', 'cs-CZ', 'de-DE',
-  // 'da-DK', 'el-GR', 'en-AU', 'en-GB', 'en-HK', 'en-IN', 'en-KE', 'en-NG', 'en-NZ', 'en-UG',
-  // 'en-RW', 'en-SG', 'en-TZ', 'en-PK', 'en-US', 'en-CA', 'en-ZA', 'en-ZM', 'es-ES', 'fa-IR',
-  // 'fi-FI', 'fo-FO', 'fr-FR', 'he-IL', 'hu-HU', 'id-ID', 'it-IT', 'ja-JP', 'kk-KZ', 'kl-GL',
-  // 'ko-KR', 'lt-LT', 'ms-MY', 'nb-NO', 'nn-NO', 'pl-PL', 'pt-PT', 'ro-RO', 'ru-RU', 'sk-SK',
-  // 'sr-RS', 'th-TH', 'tr-TR', 'uk-UA', 'vi-VN', 'zh-CN', 'zh-HK', 'zh-TW']).
-  mobilePhone(locale: ValidatorJS.MobilePhoneLocale, options?: ValidatorJS.IsMobilePhoneOptions): Rule;
-
-  // check if the string is a valid hex-encoded representation of a MongoDB ObjectId
-  // (http://docs.mongodb.org/manual/reference/object-id/).
-  mongoId(): Rule;
-
-  // check if the string contains one or more multibyte chars.
-  multibyte(): Rule;
-
-  // check if the string contains only numbers.
-  numeric(options?: ValidatorJS.IsNumericOptions): Rule;
-
-  // check if the string is a postal code, (locale is one of
-  // [ 'AT', 'AU', 'BE', 'BG', 'CA', 'CH', 'CZ', 'DE', 'DK', 'DZ', 'ES', 'FI', 'FR', 'GB', 'GR',
-  // 'IL', 'IN', 'IS', 'IT', 'JP', 'KE', 'LI', 'MX', 'NL', 'NO', 'PL', 'PT', 'RO', 'RU', 'SA',
-  // 'SE', 'TW', 'US', 'ZA', 'ZM' ]) OR 'any'. If 'any' is used, function will check if any of the
-  // locales match).
-  postalCode(locale: ValidatorJS.PostalCodeLocale): Rule;
-
-  // check if the string contains any surrogate pairs chars.
-  surrogatePair(): Rule;
-
-  // check if the string is an URL.
-  URL(options?: ValidatorJS.IsURLOptions): Rule;
-
-  // check if the string is a UUID. Must be one of ['3', '4', '5', 'all'], default is all.
-  UUID(version?: 3 | 4 | 5 | "3" | "4" | "5" | "all"): Rule;
-
-  // check if the string is uppercase.
-  uppercase(): Rule;
-
-  // check if the string contains a mixture of full and half-width chars.
-  variableWidth(): Rule;
-
-  // checks characters if they appear in the whitelist.
-  whitelisted(chars: string | string[]): Rule;
-
-  // check if string matches the pattern.
-  matches(pattern: RegExp | string, modifiers?: string): Rule;
-}
-
-interface ClassValidator {
-  type(TClass: new () => any, fieldsPattern?: string): Rule;
-}
-
-interface IValidateTarget extends CommonValidator, NumberValidator, ClassValidator {
-  func(f: (target: any, ctx: any) => Promise<boolean> | boolean): Rule
-}
-
-type RuleValidate = (target: object, key: string) => boolean | Promise<boolean>;
+type RuleValidate = (target: object, key: string) => boolean | string;
 type RuleMessage = string | ((target: object, key: string) => string);
-export class Rule {
+
+class Rule {
   private _validate: RuleValidate;
-  private _async: boolean;
+  private _onlyIf: RuleValidate;
   private _message: RuleMessage;
-  private _condition: (o: any) => boolean;
   constructor(
     validate: RuleValidate,
-    isAsync: boolean = false,
     message?: RuleMessage,
-    condition?: (o: any) => boolean
+    condition?: RuleValidate
   ) {
     if (typeof validate !== 'function') {
       throw new Error('validate must be function type')
     }
+
+    if (condition && typeof condition !== 'function') {
+      throw new Error('condition must be function type')
+    }
     this._validate = validate;
-    this._async = isAsync;
     this._message = message;
-    this._condition = condition;
+    this._onlyIf = condition;
   }
 
-  get isAsync(): boolean { return this._async; }
-
   // Validate value with current rule, ctx normally is the class instance
-  validate(target: object, key: string): boolean | Promise<boolean> {
-    return this._validate(target, key);
+  validate(target: object, key: string): boolean | string {
+    if (this._onlyIf && !this._onlyIf(target, key)) {
+      return true;
+    }
+    const result = this._validate(target, key);
+    // 校验失败且自定义错误消息
+    if (result !== true && this._message !== undefined) {
+      return this.getMessage(target, key);
+    }
+    return result;
+  }
+  private getMessage(target: object, key: string): string {
+    if (typeof (this._message) === 'function') {
+      return this._message(target, key);
+    }
+    return this._message;
   }
   // copy a new Rule with specified message
   message(message: RuleMessage): Rule {
-    return new Rule(this._validate, this._async, message, this._condition);
+    return new Rule(this._validate, message, this._onlyIf);
   }
   // copy a new Rule with specified onlyIf condition
-  onlyIf(condition: (o: any) => boolean): Rule {
-    return new Rule(this._validate, this._async, this._message, condition)
+  onlyIf(condition: RuleValidate): Rule {
+    return new Rule(this._validate, this._message, condition)
   }
-
 }
 
-class IS implements StringValidator {
-  sync(f: RuleValidate): Rule {
-    return new Rule(f);
+class RuleCreator {
+  isNot: boolean;
+  private proxyCallValidator(validatorMethod: keyof ValidatorJS.ValidatorStatic, ...rest: any[]) {
+    let isNot = this.isNot;
+    return function (target: object, key: string) {
+      let v = (Validator[validatorMethod] as any)(target[key], ...rest);
+      return isNot ? !v : v;
+    }
   }
-  async(f: RuleValidate): Rule {
-    return new Rule(f, true);
+
+  private proxyGetLocaleMessage(method: string, ...rest: any[]) {
+    let isNot = this.isNot;
+    return function (target: object, key: string) {
+      return LocaleMessages[method][isNot ? 'not' : 'is'](target, key, rest);
+    }
   }
 
   // check if the string contains the seed.
   contains(seed: string): Rule {
     return new Rule(
-      (target, key) => Validator.contains(target[key], seed),
-      false,
-      (target, key) => ''
+      this.proxyCallValidator('contains', seed),
+      this.proxyGetLocaleMessage('contains', seed)
     );
   }
 
   // check if the string is a date that's after the specified date (true means after now).
   after(date?: string): Rule {
     return new Rule(
-      (target, key) => Validator.isAfter(target[key], date),
-      false,
-      (target, key) => ''
+      this.proxyCallValidator('isAfter', date),
+      this.proxyGetLocaleMessage('after', date)
     );
   }
+
   alpha(locale?: ValidatorJS.AlphaLocale): Rule {
     return new Rule(
-      (target, key) => Validator.isAlpha(target[key], locale),
-      false,
-      (target, key) => ''
+      this.proxyCallValidator('isAlpha', locale),
+      this.proxyGetLocaleMessage('alpha', locale)
     );
   }
+
   alphanumeric(locale?: ValidatorJS.AlphaLocale): Rule {
     return new Rule(
-      (target, key) => Validator.isAlphanumeric(target[key], locale),
-      false,
-      (target, key) => ''
+      this.proxyCallValidator('isAlphanumeric', locale),
+      this.proxyGetLocaleMessage('alphanumeric', locale)
     );
   }
   ascii(): Rule {
     return new Rule(
-      (target, key) => Validator.isAscii(target[key]),
-      false,
-      (target, key) => ''
+      this.proxyCallValidator('isAscii'),
+      this.proxyGetLocaleMessage('ascii')
     );
   }
   base64(): Rule {
     return new Rule(
-      (target, key) => Validator.isBase64(target[key]),
-      false,
-      (target, key) => ''
+      this.proxyCallValidator('isBase64'),
+      this.proxyGetLocaleMessage('base64')
     );
   }
   before(date?: string): Rule {
     return new Rule(
-      (target, key) => Validator.isBefore(target[key], date),
-      false,
-      (target, key) => ''
+      this.proxyCallValidator('isBefore', date),
+      this.proxyGetLocaleMessage('before', date)
     );
   }
   byteLength(options: ValidatorJS.IsByteLengthOptions): Rule;
   byteLength(min: number, max?: number): Rule;
   byteLength(min: any, max?: any): Rule {
     return new Rule(
-      (target, key) => Validator.isByteLength(target[key], min, max),
-      false,
-      (target, key) => ''
+      this.proxyCallValidator('isByteLength', min, max),
+      this.proxyGetLocaleMessage('byteLength', min, max)
     );
-
   }
   creditCard(): Rule {
     return new Rule(
-      (target, key) => Validator.isCreditCard(target[key]),
-      false,
-      (target, key) => ''
+      this.proxyCallValidator('isCreditCard'),
+      this.proxyGetLocaleMessage('creditCard')
     );
   }
   currency(options?: ValidatorJS.IsCurrencyOptions): Rule {
     return new Rule(
-      (target, key) => Validator.isCurrency(target[key], options),
-      false,
-      (target, key) => ''
+      this.proxyCallValidator('isCurrency', options),
+      this.proxyGetLocaleMessage('currency', options)
     );
   }
   dataURI(): Rule {
     return new Rule(
-      (target, key) => Validator.isDataURI(target[key]),
-      false,
-      (target, key) => ''
+      this.proxyCallValidator('isDataURI'),
+      this.proxyGetLocaleMessage('dataURI')
     );
   }
   email(options?: ValidatorJS.IsEmailOptions): Rule {
     return new Rule(
-      (target, key) => Validator.isEmail(target[key], options),
-      false,
-      (target, key) => ''
+      this.proxyCallValidator('isEmail', options),
+      this.proxyGetLocaleMessage('email', options)
     );
   }
   FQDN(options?: ValidatorJS.IsFQDNOptions): Rule {
     return new Rule(
-      (target, key) => Validator.isFQDN(target[key], options),
-      false,
-      (target, key) => ''
+      this.proxyCallValidator('isFQDN', options),
+      this.proxyGetLocaleMessage('FQDN', options)
     );
   }
   fullWidth(): Rule {
     return new Rule(
-      (target, key) => Validator.isFullWidth(target[key]),
-      false,
-      (target, key) => ''
+      this.proxyCallValidator('isFullWidth'),
+      this.proxyGetLocaleMessage('fullWidth')
     );
   }
   halfWidth(): Rule {
     return new Rule(
-      (target, key) => Validator.isHalfWidth(target[key]),
-      false,
-      (target, key) => ''
+      this.proxyCallValidator('isHalfWidth'),
+      this.proxyGetLocaleMessage('halfWidth')
     );
   }
   hash(algorithm: ValidatorJS.HashAlgorithm): Rule {
     return new Rule(
-      (target, key) => Validator.isHash(target[key], algorithm),
-      false,
-      (target, key) => ''
+      this.proxyCallValidator('isHash', algorithm),
+      this.proxyGetLocaleMessage('hash', algorithm)
     );
   }
   hexColor(): Rule {
     return new Rule(
-      (target, key) => Validator.isHexColor(target[key]),
-      false,
-      (target, key) => ''
+      this.proxyCallValidator('isHexColor'),
+      this.proxyGetLocaleMessage('hexColor')
     );
   }
   hexadecimal(): Rule {
     return new Rule(
-      (target, key) => Validator.isHexadecimal(target[key]),
-      false,
-      (target, key) => ''
+      this.proxyCallValidator('isHexadecimal'),
+      this.proxyGetLocaleMessage('hexadecimal')
     );
   }
   IP(version?: number): Rule {
     return new Rule(
-      (target, key) => Validator.isIP(target[key], version),
-      false,
-      (target, key) => ''
+      this.proxyCallValidator('isIP', version),
+      this.proxyGetLocaleMessage('IP', version)
     );
   }
   ISBN(version?: number): Rule {
     return new Rule(
-      (target, key) => Validator.isISBN(target[key], version),
-      false,
-      (target, key) => ''
+      this.proxyCallValidator('isISBN', version),
+      this.proxyGetLocaleMessage('ISBN', version)
     );
   }
   ISSN(options?: ValidatorJS.IsISSNOptions): Rule {
     return new Rule(
-      (target, key) => Validator.isISSN(target[key], options),
-      false,
-      (target, key) => ''
+      this.proxyCallValidator('isISSN', options),
+      this.proxyGetLocaleMessage('ISSN', options)
     );
   }
   ISIN(): Rule {
     return new Rule(
-      (target, key) => Validator.isISIN(target[key]),
-      false,
-      (target, key) => ''
+      this.proxyCallValidator('isISIN'),
+      this.proxyGetLocaleMessage('ISIN')
     );
   }
   ISO8601(): Rule {
     return new Rule(
-      (target, key) => Validator.isISO8601(target[key]),
-      false,
-      (target, key) => ''
+      this.proxyCallValidator('isISO8601'),
+      this.proxyGetLocaleMessage('ISO8601')
     );
   }
   ISO31661Alpha2(): Rule {
     return new Rule(
-      (target, key) => Validator.isISO31661Alpha2(target[key]),
-      false,
-      (target, key) => ''
+      this.proxyCallValidator('isISO31661Alpha2'),
+      this.proxyGetLocaleMessage('ISO31661Alpha2')
     );
   }
   ISRC(): Rule {
     return new Rule(
-      (target, key) => Validator.isISRC(target[key]),
-      false,
-      (target, key) => ''
+      this.proxyCallValidator('isISRC'),
+      this.proxyGetLocaleMessage('ISRC')
     );
   }
   JSON(): Rule {
     return new Rule(
-      (target, key) => Validator.isJSON(target[key]),
-      false,
-      (target, key) => ''
+      this.proxyCallValidator('isJSON'),
+      this.proxyGetLocaleMessage('JSON')
     );
   }
   latLong(): Rule {
     return new Rule(
-      (target, key) => Validator.isLatLong(target[key]),
-      false,
-      (target, key) => ''
+      this.proxyCallValidator('isLatLong'),
+      this.proxyGetLocaleMessage('latLong')
     );
   }
   length(options: ValidatorJS.IsLengthOptions): Rule;
   length(min: number, max?: number): Rule;
   length(min: any, max?: any): Rule {
     return new Rule(
-      (target, key) => Validator.isLength(target[key], min, max),
-      false,
-      (target, key) => ''
+      this.proxyCallValidator('isLength', min, max),
+      this.proxyGetLocaleMessage('length', min, max)
     );
   }
   lowercase(): Rule {
     return new Rule(
-      (target, key) => Validator.isLowercase(target[key]),
-      false,
-      (target, key) => ''
+      this.proxyCallValidator('isLowercase'),
+      this.proxyGetLocaleMessage('lowercase')
     );
   }
   MACAddress(): Rule {
     return new Rule(
-      (target, key) => Validator.isMACAddress(target[key]),
-      false,
-      (target, key) => ''
+      this.proxyCallValidator('isMACAddress'),
+      this.proxyGetLocaleMessage('MACAddress')
     );
   }
   MD5(): Rule {
     return new Rule(
-      (target, key) => Validator.isMD5(target[key]),
-      false,
-      (target, key) => ''
+      this.proxyCallValidator('isMD5'),
+      this.proxyGetLocaleMessage('MD5')
     );
   }
   mimeType(): Rule {
     return new Rule(
-      (target, key) => Validator.isMimeType(target[key]),
-      false,
-      (target, key) => ''
+      this.proxyCallValidator('isMimeType'),
+      this.proxyGetLocaleMessage('mimeType')
     );
   }
   mobilePhone(locale: ValidatorJS.MobilePhoneLocale, options?: ValidatorJS.IsMobilePhoneOptions): Rule {
     return new Rule(
-      (target, key) => Validator.isMobilePhone(target[key], locale, options),
-      false,
-      (target, key) => ''
+      this.proxyCallValidator('isMobilePhone', locale, options),
+      this.proxyGetLocaleMessage('mobilePhone', locale, options)
     );
   }
   mongoId(): Rule {
     return new Rule(
-      (target, key) => Validator.isMongoId(target[key]),
-      false,
-      (target, key) => ''
+      this.proxyCallValidator('isMongoId'),
+      this.proxyGetLocaleMessage('mongoId')
     );
   }
   multibyte(): Rule {
     return new Rule(
-      (target, key) => Validator.isMultibyte(target[key]),
-      false,
-      (target, key) => ''
+      this.proxyCallValidator('isMultibyte'),
+      this.proxyGetLocaleMessage('multibyte')
     );
   }
   numeric(options?: ValidatorJS.IsNumericOptions): Rule {
     return new Rule(
-      (target, key) => Validator.isNumeric(target[key], options),
-      false,
-      (target, key) => ''
+      this.proxyCallValidator('isNumeric', options),
+      this.proxyGetLocaleMessage('numeric', options)
     );
   }
   postalCode(locale: ValidatorJS.PostalCodeLocale): Rule {
     return new Rule(
-      (target, key) => Validator.isPostalCode(target[key], locale),
-      false,
-      (target, key) => ''
+      this.proxyCallValidator('isPostalCode', locale),
+      this.proxyGetLocaleMessage('postalCode', locale)
     );
   }
   surrogatePair(): Rule {
     return new Rule(
-      (target, key) => Validator.isSurrogatePair(target[key]),
-      false,
-      (target, key) => ''
+      this.proxyCallValidator('isSurrogatePair'),
+      this.proxyGetLocaleMessage('surrogatePair')
     );
   }
   URL(options?: ValidatorJS.IsURLOptions): Rule {
     return new Rule(
-      (target, key) => Validator.isURL(target[key], options),
-      false,
-      (target, key) => ''
+      this.proxyCallValidator('isURL', options),
+      this.proxyGetLocaleMessage('URL', options)
     );
   }
   UUID(version?: 3 | 4 | 5 | "3" | "4" | "5" | "all"): Rule {
     return new Rule(
-      (target, key) => Validator.isUUID(target[key], version),
-      false,
-      (target, key) => ''
+      this.proxyCallValidator('isUUID', version),
+      this.proxyGetLocaleMessage('UUID', version)
     );
   }
   uppercase(): Rule {
     return new Rule(
-      (target, key) => Validator.isUppercase(target[key]),
-      false,
-      (target, key) => ''
+      this.proxyCallValidator('isUppercase'),
+      this.proxyGetLocaleMessage('uppercase')
     );
   }
   variableWidth(): Rule {
     return new Rule(
-      (target, key) => Validator.isVariableWidth(target[key]),
-      false,
-      (target, key) => ''
+      this.proxyCallValidator('isVariableWidth'),
+      this.proxyGetLocaleMessage('variableWidth')
     );
   }
   whitelisted(chars: string | string[]): Rule {
     return new Rule(
-      (target, key) => Validator.isWhitelisted(target[key], chars),
-      false,
-      (target, key) => ''
+      this.proxyCallValidator('isWhitelisted', chars),
+      this.proxyGetLocaleMessage('whitelisted', chars)
     );
   }
   matches(pattern: string | RegExp, modifiers?: string): Rule {
     return new Rule(
-      (target, key) => Validator.matches(target[key], pattern, modifiers),
-      false,
-      (target, key) => ''
+      this.proxyCallValidator('matches', pattern, modifiers),
+      this.proxyGetLocaleMessage('matches', pattern, modifiers)
+    );
+  }
+
+  // check if the string represents a decimal number, such as 0.1, .3, 1.1, 1.00003, 4.0, etc.
+  decimal(options?: ValidatorJS.IsDecimalOptions): Rule {
+    return new Rule(
+      this.proxyCallValidator('isDecimal', options),
+      this.proxyGetLocaleMessage('decimal', options)
+    );
+  }
+
+  // check if the string is a number that's divisible by another.
+  divisibleBy(number: number): Rule {
+    return new Rule(
+      this.proxyCallValidator('isDivisibleBy', number),
+      this.proxyGetLocaleMessage('divisibleBy', number)
+    );
+  }
+
+
+  // check if the string is a float.
+  float(options?: ValidatorJS.IsFloatOptions): Rule {
+    return new Rule(
+      this.proxyCallValidator('isFloat', options),
+      this.proxyGetLocaleMessage('float', options)
+    );
+  }
+
+  // check if the string is an integer.
+  int(options?: ValidatorJS.IsIntOptions): Rule {
+    return new Rule(
+      this.proxyCallValidator('isInt', options),
+      this.proxyGetLocaleMessage('int', options)
+    );
+  }
+
+  // check if the string is a valid port number.
+  port(): Rule {
+    return new Rule(
+      this.proxyCallValidator('isPort'),
+      this.proxyGetLocaleMessage('port')
+    );
+  }
+
+  // check if the string matches the comparison.
+  equals(comparison: any): Rule {
+    return new Rule(
+      this.proxyCallValidator('equals', comparison),
+      this.proxyGetLocaleMessage('equals', comparison)
+    );
+  }
+
+  // check if the string has a length of zero or undefined.
+  empty(): Rule {
+    return new Rule(
+      this.proxyCallValidator('isEmpty'),
+      this.proxyGetLocaleMessage('empty')
+    );
+  }
+
+  // check if value is not undefined
+  required(): Rule {
+    return new Rule(
+      (target, key) => target[key] !== undefined,
+      this.proxyGetLocaleMessage('required')
+    );
+  }
+
+  // check if the string is in a array of allowed values.
+  in(values: any[]): Rule {
+    return new Rule(
+      this.proxyCallValidator('isIn', values),
+      this.proxyGetLocaleMessage('in', values)
+    );
+  }
+  func(f: (target: any, key: string) => boolean): Rule {
+    return new Rule(
+      (target, key) => f(target, key),
+      this.proxyGetLocaleMessage('func')
+    );
+  }
+  type(TClass: new () => any, fieldsPattern?: string): Rule {
+    return new Rule(
+      (target, key) => isClass(target[key], TClass, fieldsPattern),
+      this.proxyGetLocaleMessage('type', TClass)
     );
   }
 }
 
-export function validate(...rules: Array<Rule | Rule[]>) {
-  return function (target: any, key: string | symbol) {
-    target.__validators = target.__validators || [];
-    target.__validators.push(key);
-    return Reflect.metadata('validate', rules)(target, key);
+class LocaleMessages {
+  contains: {
+    is: (target: object, key: string, ...rest: any[]) => ``,
+    not: (target: object, key: string, ...rest: any[]) => ``
+  }
+  after: {
+    is: (target: object, key: string, ...rest: any[]) => ``,
+    not: (target: object, key: string, ...rest: any[]) => ``
+  }
+  alpha: {
+    is: (target: object, key: string, ...rest: any[]) => ``,
+    not: (target: object, key: string, ...rest: any[]) => ``
+  }
+  alphanumeric: {
+    is: (target: object, key: string, ...rest: any[]) => ``,
+    not: (target: object, key: string, ...rest: any[]) => ``
+  }
+  ascii: {
+    is: (target: object, key: string, ...rest: any[]) => ``,
+    not: (target: object, key: string, ...rest: any[]) => ``
+  }
+  base64: {
+    is: (target: object, key: string, ...rest: any[]) => ``,
+    not: (target: object, key: string, ...rest: any[]) => ``
+  }
+  before: {
+    is: (target: object, key: string, ...rest: any[]) => ``,
+    not: (target: object, key: string, ...rest: any[]) => ``
+  }
+  byteLength: {
+    is: (target: object, key: string, ...rest: any[]) => ``,
+    not: (target: object, key: string, ...rest: any[]) => ``
+  }
+  creditCard: {
+    is: (target: object, key: string, ...rest: any[]) => ``,
+    not: (target: object, key: string, ...rest: any[]) => ``
+  }
+  currency: {
+    is: (target: object, key: string, ...rest: any[]) => ``,
+    not: (target: object, key: string, ...rest: any[]) => ``
+  }
+  dataURI: {
+    is: (target: object, key: string, ...rest: any[]) => ``,
+    not: (target: object, key: string, ...rest: any[]) => ``
+  }
+  email: {
+    is: (target: object, key: string, ...rest: any[]) => ``,
+    not: (target: object, key: string, ...rest: any[]) => ``
+  }
+  FQDN: {
+    is: (target: object, key: string, ...rest: any[]) => ``,
+    not: (target: object, key: string, ...rest: any[]) => ``
+  }
+  fullWidth: {
+    is: (target: object, key: string, ...rest: any[]) => ``,
+    not: (target: object, key: string, ...rest: any[]) => ``
+  }
+  halfWidth: {
+    is: (target: object, key: string, ...rest: any[]) => ``,
+    not: (target: object, key: string, ...rest: any[]) => ``
+  }
+  hash: {
+    is: (target: object, key: string, ...rest: any[]) => ``,
+    not: (target: object, key: string, ...rest: any[]) => ``
+  }
+  hexColor: {
+    is: (target: object, key: string, ...rest: any[]) => ``,
+    not: (target: object, key: string, ...rest: any[]) => ``
+  }
+  hexadecimal: {
+    is: (target: object, key: string, ...rest: any[]) => ``,
+    not: (target: object, key: string, ...rest: any[]) => ``
+  }
+  IP: {
+    is: (target: object, key: string, ...rest: any[]) => ``,
+    not: (target: object, key: string, ...rest: any[]) => ``
+  }
+  ISBN: {
+    is: (target: object, key: string, ...rest: any[]) => ``,
+    not: (target: object, key: string, ...rest: any[]) => ``
+  }
+  ISSN: {
+    is: (target: object, key: string, ...rest: any[]) => ``,
+    not: (target: object, key: string, ...rest: any[]) => ``
+  }
+  ISIN: {
+    is: (target: object, key: string, ...rest: any[]) => ``,
+    not: (target: object, key: string, ...rest: any[]) => ``
+  }
+  ISO8601: {
+    is: (target: object, key: string, ...rest: any[]) => ``,
+    not: (target: object, key: string, ...rest: any[]) => ``
+  }
+  ISO31661Alpha2: {
+    is: (target: object, key: string, ...rest: any[]) => ``,
+    not: (target: object, key: string, ...rest: any[]) => ``
+  }
+  ISRC: {
+    is: (target: object, key: string, ...rest: any[]) => ``,
+    not: (target: object, key: string, ...rest: any[]) => ``
+  }
+  JSON: {
+    is: (target: object, key: string, ...rest: any[]) => ``,
+    not: (target: object, key: string, ...rest: any[]) => ``
+  }
+  latLong: {
+    is: (target: object, key: string, ...rest: any[]) => ``,
+    not: (target: object, key: string, ...rest: any[]) => ``
+  }
+  length: {
+    is: (target: object, key: string, ...rest: any[]) => ``,
+    not: (target: object, key: string, ...rest: any[]) => ``
+  }
+  lowercase: {
+    is: (target: object, key: string, ...rest: any[]) => ``,
+    not: (target: object, key: string, ...rest: any[]) => ``
+  }
+  MACAddress: {
+    is: (target: object, key: string, ...rest: any[]) => ``,
+    not: (target: object, key: string, ...rest: any[]) => ``
+  }
+  MD5: {
+    is: (target: object, key: string, ...rest: any[]) => ``,
+    not: (target: object, key: string, ...rest: any[]) => ``
+  }
+  mimeType: {
+    is: (target: object, key: string, ...rest: any[]) => ``,
+    not: (target: object, key: string, ...rest: any[]) => ``
+  }
+  mobilePhone: {
+    is: (target: object, key: string, ...rest: any[]) => ``,
+    not: (target: object, key: string, ...rest: any[]) => ``
+  }
+  mongoId: {
+    is: (target: object, key: string, ...rest: any[]) => ``,
+    not: (target: object, key: string, ...rest: any[]) => ``
+  }
+  multibyte: {
+    is: (target: object, key: string, ...rest: any[]) => ``,
+    not: (target: object, key: string, ...rest: any[]) => ``
+  }
+  numeric: {
+    is: (target: object, key: string, ...rest: any[]) => ``,
+    not: (target: object, key: string, ...rest: any[]) => ``
+  }
+  postalCode: {
+    is: (target: object, key: string, ...rest: any[]) => ``,
+    not: (target: object, key: string, ...rest: any[]) => ``
+  }
+  surrogatePair: {
+    is: (target: object, key: string, ...rest: any[]) => ``,
+    not: (target: object, key: string, ...rest: any[]) => ``
+  }
+  URL: {
+    is: (target: object, key: string, ...rest: any[]) => ``,
+    not: (target: object, key: string, ...rest: any[]) => ``
+  }
+  UUID: {
+    is: (target: object, key: string, ...rest: any[]) => ``,
+    not: (target: object, key: string, ...rest: any[]) => ``
+  }
+  uppercase: {
+    is: (target: object, key: string, ...rest: any[]) => ``,
+    not: (target: object, key: string, ...rest: any[]) => ``
+  }
+  variableWidth: {
+    is: (target: object, key: string, ...rest: any[]) => ``,
+    not: (target: object, key: string, ...rest: any[]) => ``
+  }
+  whitelisted: {
+    is: (target: object, key: string, ...rest: any[]) => ``,
+    not: (target: object, key: string, ...rest: any[]) => ``
+  }
+  matches: {
+    is: (target: object, key: string, ...rest: any[]) => ``,
+    not: (target: object, key: string, ...rest: any[]) => ``
+  }
+  decimal: {
+    is: (target: object, key: string, ...rest: any[]) => ``,
+    not: (target: object, key: string, ...rest: any[]) => ``
+  }
+  divisibleBy: {
+    is: (target: object, key: string, ...rest: any[]) => ``,
+    not: (target: object, key: string, ...rest: any[]) => ``
+  }
+  float: {
+    is: (target: object, key: string, ...rest: any[]) => ``,
+    not: (target: object, key: string, ...rest: any[]) => ``
+  }
+  int: {
+    is: (target: object, key: string, ...rest: any[]) => ``,
+    not: (target: object, key: string, ...rest: any[]) => ``
+  }
+  port: {
+    is: (target: object, key: string, ...rest: any[]) => ``,
+    not: (target: object, key: string, ...rest: any[]) => ``
+  }
+  equals: {
+    is: (target: object, key: string, ...rest: any[]) => ``,
+    not: (target: object, key: string, ...rest: any[]) => ``
+  }
+  empty: {
+    is: (target: object, key: string, ...rest: any[]) => ``,
+    not: (target: object, key: string, ...rest: any[]) => ``
+  }
+  required: {
+    is: (target: object, key: string, ...rest: any[]) => ``,
+    not: (target: object, key: string, ...rest: any[]) => ``
+  }
+  in: {
+    is: (target: object, key: string, ...rest: any[]) => ``,
+    not: (target: object, key: string, ...rest: any[]) => ``
+  }
+  func: {
+    is: (target: object, key: string, ...rest: any[]) => ``,
+    not: (target: object, key: string, ...rest: any[]) => ``
+  }
+  type: {
+    is: (target: object, key: string, ...rest: any[]) => ``,
+    not: (target: object, key: string, ...rest: any[]) => ``
   }
 }
-
-validate.each = function (...rules: Array<Rule | Rule[]>) {
-  return function (target: any, key: string | symbol) {
-    target.__validators = target.__validators || [];
-    target.__validators.push(key);
-    return Reflect.metadata('validate', rules)(target, key);
-  }
-}
-
-export function and(...rules: Array<Rule | Rule[]>): Rule { return null; }
-export function or(...rules: Array<Rule | Rule[]>): Rule { return null; }
-
-export declare var is: IS;
-is = new IS();
-
 
 export function mixins(...args: any[]) {
   return function <T extends { new(...args: any[]): {} }>(constructor: T) {
@@ -675,9 +667,9 @@ export function mixins(...args: any[]) {
       });
       // copy decorators
       (baseCtor.prototype.__validators || []).forEach((name: string) => {
-        var m = Reflect.getMetadata('validate', baseCtor.prototype, name)
+        var m = Reflect.getMetadata(METADATA_KEY, baseCtor.prototype, name)
         if (m) {
-          Reflect.metadata('validate', m)(constructor.prototype, name);
+          Reflect.metadata(METADATA_KEY, m)(constructor.prototype, name);
         }
       })
     });
@@ -685,19 +677,12 @@ export function mixins(...args: any[]) {
 
 }
 
-export function getRules<T>(TClass: new () => T, method: string = 'get') {
-  return function (target: any, propertyKey: string, descriptor: PropertyDescriptor) {
-    var tInstance = new TClass();
-    const rules = {};
-    TClass.prototype.__validators.forEach((key: string) => {
-      rules[key] = { method, ...Reflect.getMetadata('validate', TClass.prototype, key) };
-    })
-    console.log(rules);
-    descriptor.value = function () {
-      this.allowMethods = method;
-      this.rules = rules;
-    }
-  }
+export function getRules<T>(TClass: new () => T): { [name: string]: Array<Rule> } {
+  const rules = {};
+  TClass.prototype.__validators.forEach((key: string) => {
+    rules[key] = Reflect.getMetadata(METADATA_KEY, TClass.prototype, key);
+  })
+  return rules;
 }
 
 function validateGet<T>(TClass: new () => T): T {
@@ -705,3 +690,84 @@ function validateGet<T>(TClass: new () => T): T {
   var instance = new TClass();
   return Object.assign(instance, this.get(fields));
 }
+
+export function and(...rules: Array<Rule>): Rule {
+  if (rules.length === 0) throw new Error('and must accept at lease one rule');
+  if (rules.length === 1) return rules[0];
+  return new Rule(function (target, key) {
+    for (let r of rules) {
+      let result = r.validate(target, key);
+      if (result !== true) {
+        if (this._message !== undefined) return this.getMessage(target, key);
+        return result;
+      }
+    }
+    return true;
+  });
+}
+export function or(...rules: Array<Rule>): Rule {
+  if (rules.length === 0) throw new Error('or must accept at lease one rule');
+  if (rules.length === 1) return rules[0];
+  return new Rule(function (target, key) {
+    let messages = [];
+    for (let r of rules) {
+      let eachResult = r.validate(target, key);
+      if (eachResult === true) return true;
+      messages.push(eachResult);
+    }
+    if (this._message !== undefined) {
+      return this.getMessage(target, key);
+    }
+    return messages.join(' 或者 ');
+  });
+}
+
+export function each(...rules: Array<Rule>): Rule {
+  let rule = and(...rules);
+  return new Rule(function (target, key) {
+    let value = target[key] as Array<any>;
+    if (!Array.isArray(value)) {
+      return `target.${key} is not array`;
+    }
+    for (let v in value) {
+      let result = rule.validate(value, v);
+      if (result !== true) {
+        if (this._message !== undefined) {
+          return this.getMessage(value, v);
+        }
+        return result;
+      }
+    }
+    return true;
+  });
+}
+
+export function isClass(target: any, TClass: new () => any, fieldsPattern?: string): boolean | string {
+  const keyRules = getRules(TClass);
+  for (let key in keyRules) {
+    for (let rule of keyRules[key]) {
+      if (Array.isArray(rule)) {
+        rule = and(rule);
+      }
+      let each = rule.validate(target, key);
+      if (each !== true) {
+        return each;
+      }
+    }
+  }
+  return true;
+}
+
+export function validate(...rules: Array<Rule>) {
+  return function (target: any, key: string | symbol) {
+    target.__validators = target.__validators || [];
+    target.__validators.push(key);
+    return Reflect.metadata(METADATA_KEY, rules)(target, key);
+  }
+}
+
+export declare var is: IS;
+export declare var not: IS
+is = new IS();
+not = new IS();
+

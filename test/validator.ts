@@ -1,4 +1,4 @@
-import { mixins, validate, is, and, or } from '../src/index';
+import { mixins, validate, is, and, or, isClass } from '../src/index';
 async function queryDatabase(v: any) { return v; }
 
 class IdParam {
