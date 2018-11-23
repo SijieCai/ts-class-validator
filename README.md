@@ -108,5 +108,5 @@ setErrorMessage({
 ```
 
 ## Async Support
-No async method validate support for now!
-Async method is technically reachable, but may mislead user to write low performance code, expecially in server. most of time async validation is time consuming so we normally want to run all the sync validations successful, and then do the async task one by one, or parallelly, depends on real situation. If we want to eable all situation, it may end up with a very ugly and complecated design. Let me know if you have better idea so we can add async feature with minimum user overhead.
+No async validate method support for now!
+Async validation mixed with sync ones may cuase performance issues. why? the most of the time async validation is time consuming, we normally want to run all the sync validations successful first, and then do the async task one by one, or parallelly, depends on real situation. If we want to design the interface to support all above scenarios, it may end up with a very ugly and complecated design. Let me know if you have better idea.
