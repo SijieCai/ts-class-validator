@@ -10,25 +10,48 @@ class IdClass {
 }
 
 class NameClass {
-  @validate(
-    is.length(4, 10),
-    is.contains('360')
-  )
+  @validate(is.length(4, 10), is.contains('360'))
   name: string;
 }
 
 class NestedClass {
-  @validate(
-    is.class(IdClass)
-  )
+  @validate(is.class(IdClass))
   id: IdClass;
 }
 
 class DeeplyNestedClass {
-  @validate(
-    is.class(NestedClass)
-  )
+  @validate(is.class(NestedClass))
   value: NestedClass;
+}
+
+class AndOrClass {
+  @validate(or(
+    is.in([1, 2, 3]),
+    and(
+      is.in([4, 5, 6]),
+      is.divisibleBy(2)
+    )
+  ))
+  value: number;
+}
+
+class OnlyIfClass {
+  @validate(is.in([1, 2, 3]).onlyIf(target => target['value2'] !== undefined))
+  status: number;
+  @validate(is.int())
+  value2: number;
+}
+
+class CustomizeMessageClass {
+  @validate(
+    is.required().message('field is required!!'),
+    is.equals('some value').message('field must equals to some vlaue!!'),
+    or(
+      is.in([1,2]),
+      is.equals(3)
+    ).message('field must be 1,2 or 3, just kidding LOL.')
+  )
+  field: string;
 }
 
 test('each', () => {
@@ -67,26 +90,28 @@ test('deeply nested class', () => {
   expect(isClass(target2, DeeplyNestedClass)).not.toBe(true);
 })
 
-class AndOrClass {
-  @validate(or(
-    is.in([1, 2, 3]),
-    and(
-      is.in([4, 5, 6]),
-      is.divisibleBy(2)
-    )
-  ))
-  value: number;
-}
-test('and or logic', ()=>{
-  expect(isClass({value: 1}, AndOrClass)).toBe(true)
-  expect(isClass({value: 2}, AndOrClass)).toBe(true)
-  expect(isClass({value: 3}, AndOrClass)).toBe(true)
-  expect(isClass({value: 4}, AndOrClass)).toBe(true)
-  expect(isClass({value: 5}, AndOrClass)).not.toBe(true)
-  expect(isClass({value: 6}, AndOrClass)).toBe(true)
-  expect(isClass({value: 7}, AndOrClass)).not.toBe(true)
+test('and or logic', () => {
+  expect(isClass({ value: 1 }, AndOrClass)).toBe(true)
+  expect(isClass({ value: 2 }, AndOrClass)).toBe(true)
+  expect(isClass({ value: 3 }, AndOrClass)).toBe(true)
+  expect(isClass({ value: 4 }, AndOrClass)).toBe(true)
+  expect(isClass({ value: 5 }, AndOrClass)).not.toBe(true)
+  expect(isClass({ value: 6 }, AndOrClass)).toBe(true)
+  expect(isClass({ value: 7 }, AndOrClass)).not.toBe(true)
 })
 
-test('onlyIf', ()=>{
-  
+test('onlyIf', () => {
+  expect(isClass({ status: 4 }, OnlyIfClass)).toBe(true);
+  expect(isClass({ status: 4, value2: 1 }, OnlyIfClass)).not.toBe(true);
+  expect(isClass({ status: 1, value2: 1 }, OnlyIfClass)).toBe(true);
+  expect(isClass({ status: 2, value2: 1 }, OnlyIfClass)).toBe(true);
+  expect(isClass({ status: 3, value2: 1 }, OnlyIfClass)).toBe(true);
+  expect(isClass({ status: 3, value2: 'sdk' }, OnlyIfClass)).not.toBe(true);
+});
+
+
+test('customize message', () => {
+  expect(isClass({}, CustomizeMessageClass)).toBe('field is required!!');
+  expect(isClass({ field: 'other value' }, CustomizeMessageClass)).toBe('field must equals to some vlaue!!');
+  expect(isClass({ field: 'some value' }, CustomizeMessageClass)).toBe('field must be 1,2 or 3, just kidding LOL.');
 });

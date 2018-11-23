@@ -60,8 +60,16 @@ class RuleCreator {
   private proxyCallValidator(validatorMethod: keyof ValidatorJS.ValidatorStatic, ...rest: any[]) {
     let isNot = this.isNot;
     return function (target: object, key: string) {
-      let r = (Validator[validatorMethod] as any)(target[key].toString(), ...rest);
-      return (isNot ? !r : r);
+      let v = target[key];
+      if (v === undefined || v === null)
+        return true;
+
+      if (typeof (v) === 'number') v = v.toString();
+      if (typeof (v) === 'string') {
+        let r = (Validator[validatorMethod] as any)(v, ...rest);
+        return (isNot ? !r : r);
+      }
+      return false;
     }
   }
 
