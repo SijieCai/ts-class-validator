@@ -438,7 +438,7 @@ class RuleCreator {
   // check if value is not undefined
   required(): Rule {
     return new Rule(
-      this.proxyCall((target, key) => target[key] !== undefined),
+      this.proxyCall((target, key) => (target[key] !== undefined && target[key] !== null)),
       this.proxyGetLocaleMessage('required')
     );
   }
@@ -450,7 +450,7 @@ class RuleCreator {
       this.proxyGetLocaleMessage('in', values)
     );
   }
-  func(f: (target: any, key: string) => boolean): Rule {
+  func(f: (target: any, key: string) => boolean | string): Rule {
     return new Rule(
       this.proxyCall((target, key) => f(target, key)),
       this.proxyGetLocaleMessage('func')
@@ -693,6 +693,11 @@ const LocaleErrorMessages = {
     is: (target: object, key: string, ...rest: any[]) => `${target[key]} is type of ${rest[0].toString()}`,
     not: (target: object, key: string, ...rest: any[]) => `${target[key]} is not type of ${rest[0].toString()}`
   }
+}
+
+
+export function setErrorMessage(setting: any) {
+  Object.assign(LocaleErrorMessages, setting)
 }
 
 export function mixins(...args: any[]) {

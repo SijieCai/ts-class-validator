@@ -1,9 +1,9 @@
-import { validate, is, not, and, or, each, isClass } from '../src/index';
+import { validate, is, not, and, or, each, isClass, mixins } from '../src/index';
 
 class IdClass {
   @validate(each(
     is.int(),
-    not.in(['3']),
+    not.in([3]),
     is.required()
   ))
   id: number[];
@@ -47,12 +47,21 @@ class CustomizeMessageClass {
     is.required().message('field is required!!'),
     is.equals('some value').message('field must equals to some vlaue!!'),
     or(
-      is.in([1,2]),
+      is.in([1, 2]),
       is.equals(3)
     ).message('field must be 1,2 or 3, just kidding LOL.')
   )
   field: string;
 }
+
+// 组合复用
+@mixins(IdClass, NameClass)
+class MixinClass implements IdClass, NameClass {
+  name: string;
+  id: number[];
+}
+
+// 不支持继承复用
 
 test('each', () => {
   expect(isClass({ id: ['111'] }, IdClass)).toBe(true);
@@ -109,9 +118,16 @@ test('onlyIf', () => {
   expect(isClass({ status: 3, value2: 'sdk' }, OnlyIfClass)).not.toBe(true);
 });
 
-
 test('customize message', () => {
   expect(isClass({}, CustomizeMessageClass)).toBe('field is required!!');
   expect(isClass({ field: 'other value' }, CustomizeMessageClass)).toBe('field must equals to some vlaue!!');
   expect(isClass({ field: 'some value' }, CustomizeMessageClass)).toBe('field must be 1,2 or 3, just kidding LOL.');
 });
+
+test('mixin', () => {
+  expect(isClass({ id: [1], name: '360name' }, MixinClass)).toBe(true);
+  expect(isClass({ id: [1, '3'], name: '360name' }, MixinClass)).not.toBe(true);
+  expect(isClass({ id: [1], name: '234name' }, MixinClass)).not.toBe(true);
+  expect(isClass({ id: [1], name: '234namesd too long' }, MixinClass)).not.toBe(true);
+  expect(isClass({ id: [1], name: 'sfa' }, MixinClass)).not.toBe(true);
+})
