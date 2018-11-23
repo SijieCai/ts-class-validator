@@ -56,19 +56,27 @@ class Rule {
 }
 
 class RuleCreator {
-  isNot: boolean;
+  constructor(private isNot: boolean = false) { }
   private proxyCallValidator(validatorMethod: keyof ValidatorJS.ValidatorStatic, ...rest: any[]) {
     let isNot = this.isNot;
     return function (target: object, key: string) {
-      let v = (Validator[validatorMethod] as any)(target[key], ...rest);
-      return isNot ? !v : v;
+      let r = (Validator[validatorMethod] as any)(target[key], ...rest);
+      return (isNot ? !r : r);
+    }
+  }
+
+  private proxyCall(f: (target: object, key: string) => boolean | string) {
+    let isNot = this.isNot;
+    return function (target: object, key: string) {
+      let r = f(target, key);
+      return (isNot ? !r : r);
     }
   }
 
   private proxyGetLocaleMessage(method: string, ...rest: any[]) {
     let isNot = this.isNot;
     return function (target: object, key: string) {
-      return LocaleMessages[method][isNot ? 'not' : 'is'](target, key, rest);
+      return LocaleErrorMessages[method][isNot ? 'not' : 'is'](target, key, rest);
     }
   }
 
@@ -395,6 +403,22 @@ class RuleCreator {
     );
   }
 
+  // ===
+  tribleEquals(comparison: any): Rule {
+    return new Rule(
+      this.proxyCall((target, key) => target[key] === comparison),
+      this.proxyGetLocaleMessage('tribleEquals', comparison)
+    );
+  }
+
+  // ==
+  doubleEquals(comparison: any): Rule {
+    return new Rule(
+      this.proxyCall((target, key) => target[key] == comparison),
+      this.proxyGetLocaleMessage('doubleEquals', comparison)
+    );
+  }
+
   // check if the string has a length of zero or undefined.
   empty(): Rule {
     return new Rule(
@@ -406,7 +430,7 @@ class RuleCreator {
   // check if value is not undefined
   required(): Rule {
     return new Rule(
-      (target, key) => target[key] !== undefined,
+      this.proxyCall((target, key) => target[key] !== undefined),
       this.proxyGetLocaleMessage('required')
     );
   }
@@ -420,238 +444,246 @@ class RuleCreator {
   }
   func(f: (target: any, key: string) => boolean): Rule {
     return new Rule(
-      (target, key) => f(target, key),
+      this.proxyCall((target, key) => f(target, key)),
       this.proxyGetLocaleMessage('func')
     );
   }
-  type(TClass: new () => any, fieldsPattern?: string): Rule {
+  class(TClass: new () => any, fieldsPattern?: string): Rule {
     return new Rule(
-      (target, key) => isClass(target[key], TClass, fieldsPattern),
-      this.proxyGetLocaleMessage('type', TClass)
+      this.proxyCall((target, key) => isClass(target[key], TClass, fieldsPattern)),
+      this.proxyGetLocaleMessage('class', TClass)
     );
   }
 }
 
-class LocaleMessages {
+const LocaleErrorMessages = {
   contains: {
-    is: (target: object, key: string, ...rest: any[]) => ``,
-    not: (target: object, key: string, ...rest: any[]) => ``
-  }
+    is: (target: object, key: string, ...rest: any[]) => `validation failed, rule: ${target[key]} contains ${rest.join(', ')}`,
+    not: (target: object, key: string, ...rest: any[]) => `validation failed, rule: ${target[key]} not contains ${rest.join(', ')}`
+  },
   after: {
-    is: (target: object, key: string, ...rest: any[]) => ``,
-    not: (target: object, key: string, ...rest: any[]) => ``
-  }
+    is: (target: object, key: string, ...rest: any[]) => `validation failed, rule: ${target[key]} date is after date ${rest.join(', ')}`,
+    not: (target: object, key: string, ...rest: any[]) => `validation failed, rule: ${target[key]} date is not after date ${rest.join(', ')}`
+  },
   alpha: {
-    is: (target: object, key: string, ...rest: any[]) => ``,
-    not: (target: object, key: string, ...rest: any[]) => ``
-  }
+    is: (target: object, key: string, ...rest: any[]) => `validation failed, rule: ${target[key]} is alpha`,
+    not: (target: object, key: string, ...rest: any[]) => `validation failed, rule: ${target[key]} is not alpha`
+  },
   alphanumeric: {
-    is: (target: object, key: string, ...rest: any[]) => ``,
-    not: (target: object, key: string, ...rest: any[]) => ``
-  }
+    is: (target: object, key: string, ...rest: any[]) => `validation failed, rule: ${target[key]} is alphanumeric`,
+    not: (target: object, key: string, ...rest: any[]) => `validation failed, rule: ${target[key]} is not alphanumeric`
+  },
   ascii: {
-    is: (target: object, key: string, ...rest: any[]) => ``,
-    not: (target: object, key: string, ...rest: any[]) => ``
-  }
+    is: (target: object, key: string, ...rest: any[]) => `validation failed, rule: ${target[key]} is ascii`,
+    not: (target: object, key: string, ...rest: any[]) => `validation failed, rule: ${target[key]} is not ascii`
+  },
   base64: {
-    is: (target: object, key: string, ...rest: any[]) => ``,
-    not: (target: object, key: string, ...rest: any[]) => ``
-  }
+    is: (target: object, key: string, ...rest: any[]) => `validation failed, rule: ${target[key]} is base64`,
+    not: (target: object, key: string, ...rest: any[]) => `validation failed, rule: ${target[key]} is not base64`
+  },
   before: {
-    is: (target: object, key: string, ...rest: any[]) => ``,
-    not: (target: object, key: string, ...rest: any[]) => ``
-  }
+    is: (target: object, key: string, ...rest: any[]) => `validation failed, rule: ${target[key]} date is before date ${rest.join(', ')}`,
+    not: (target: object, key: string, ...rest: any[]) => `validation failed, rule: ${target[key]} date is before date ${rest.join(', ')}`
+  },
   byteLength: {
-    is: (target: object, key: string, ...rest: any[]) => ``,
-    not: (target: object, key: string, ...rest: any[]) => ``
-  }
+    is: (target: object, key: string, ...rest: any[]) => `validation failed, rule: ${target[key]} byte length is ${rest.join(' ')}`,
+    not: (target: object, key: string, ...rest: any[]) => `validation failed, rule: ${target[key]} byte length is ${rest.join(' ')}`
+  },
   creditCard: {
-    is: (target: object, key: string, ...rest: any[]) => ``,
-    not: (target: object, key: string, ...rest: any[]) => ``
-  }
+    is: (target: object, key: string, ...rest: any[]) => `validation failed, rule: ${target[key]} is credit card`,
+    not: (target: object, key: string, ...rest: any[]) => `validation failed, rule: ${target[key]} is not credit card`
+  },
   currency: {
-    is: (target: object, key: string, ...rest: any[]) => ``,
-    not: (target: object, key: string, ...rest: any[]) => ``
-  }
+    is: (target: object, key: string, ...rest: any[]) => `validation failed, rule: ${target[key]} is currency`,
+    not: (target: object, key: string, ...rest: any[]) => `validation failed, rule: ${target[key]} is not currency`
+  },
   dataURI: {
-    is: (target: object, key: string, ...rest: any[]) => ``,
-    not: (target: object, key: string, ...rest: any[]) => ``
-  }
+    is: (target: object, key: string, ...rest: any[]) => `validation failed, rule: ${target[key]} is date URI`,
+    not: (target: object, key: string, ...rest: any[]) => `validation failed, rule: ${target[key]} is not date URI`
+  },
   email: {
-    is: (target: object, key: string, ...rest: any[]) => ``,
-    not: (target: object, key: string, ...rest: any[]) => ``
-  }
+    is: (target: object, key: string, ...rest: any[]) => `validation failed, rule: ${target[key]} is email`,
+    not: (target: object, key: string, ...rest: any[]) => `validation failed, rule: ${target[key]} is not email`
+  },
   FQDN: {
-    is: (target: object, key: string, ...rest: any[]) => ``,
-    not: (target: object, key: string, ...rest: any[]) => ``
-  }
+    is: (target: object, key: string, ...rest: any[]) => `validation failed, rule: ${target[key]} is FQDN`,
+    not: (target: object, key: string, ...rest: any[]) => `validation failed, rule: ${target[key]} is not FQDN`
+  },
   fullWidth: {
-    is: (target: object, key: string, ...rest: any[]) => ``,
-    not: (target: object, key: string, ...rest: any[]) => ``
-  }
+    is: (target: object, key: string, ...rest: any[]) => `validation failed, rule: ${target[key]} is full width`,
+    not: (target: object, key: string, ...rest: any[]) => `validation failed, rule: ${target[key]} is not full width`
+  },
   halfWidth: {
-    is: (target: object, key: string, ...rest: any[]) => ``,
-    not: (target: object, key: string, ...rest: any[]) => ``
-  }
+    is: (target: object, key: string, ...rest: any[]) => `validation failed, rule: ${target[key]} is half width`,
+    not: (target: object, key: string, ...rest: any[]) => `validation failed, rule: ${target[key]} is not half width`
+  },
   hash: {
-    is: (target: object, key: string, ...rest: any[]) => ``,
-    not: (target: object, key: string, ...rest: any[]) => ``
-  }
+    is: (target: object, key: string, ...rest: any[]) => `validation failed, rule: ${target[key]} is hash`,
+    not: (target: object, key: string, ...rest: any[]) => `validation failed, rule: ${target[key]} is not hash`
+  },
   hexColor: {
-    is: (target: object, key: string, ...rest: any[]) => ``,
-    not: (target: object, key: string, ...rest: any[]) => ``
-  }
+    is: (target: object, key: string, ...rest: any[]) => `validation failed, rule: ${target[key]} is hex color`,
+    not: (target: object, key: string, ...rest: any[]) => `validation failed, rule: ${target[key]} is not hex color`
+  },
   hexadecimal: {
-    is: (target: object, key: string, ...rest: any[]) => ``,
-    not: (target: object, key: string, ...rest: any[]) => ``
-  }
+    is: (target: object, key: string, ...rest: any[]) => `validation failed, rule: ${target[key]} is hex decimal`,
+    not: (target: object, key: string, ...rest: any[]) => `validation failed, rule: ${target[key]} is not hex decimal`
+  },
   IP: {
-    is: (target: object, key: string, ...rest: any[]) => ``,
-    not: (target: object, key: string, ...rest: any[]) => ``
-  }
+    is: (target: object, key: string, ...rest: any[]) => `validation failed, rule: ${target[key]} is IP`,
+    not: (target: object, key: string, ...rest: any[]) => `validation failed, rule: ${target[key]} is not IP`
+  },
   ISBN: {
-    is: (target: object, key: string, ...rest: any[]) => ``,
-    not: (target: object, key: string, ...rest: any[]) => ``
-  }
+    is: (target: object, key: string, ...rest: any[]) => `validation failed, rule: ${target[key]} is ISBN`,
+    not: (target: object, key: string, ...rest: any[]) => `validation failed, rule: ${target[key]} is not ISBN`
+  },
   ISSN: {
-    is: (target: object, key: string, ...rest: any[]) => ``,
-    not: (target: object, key: string, ...rest: any[]) => ``
-  }
+    is: (target: object, key: string, ...rest: any[]) => `validation failed, rule: ${target[key]} is ISSN`,
+    not: (target: object, key: string, ...rest: any[]) => `validation failed, rule: ${target[key]} is not ISSN`
+  },
   ISIN: {
-    is: (target: object, key: string, ...rest: any[]) => ``,
-    not: (target: object, key: string, ...rest: any[]) => ``
-  }
+    is: (target: object, key: string, ...rest: any[]) => `validation failed, rule: ${target[key]} is ISIN`,
+    not: (target: object, key: string, ...rest: any[]) => `validation failed, rule: ${target[key]} is not ISIN`
+  },
   ISO8601: {
-    is: (target: object, key: string, ...rest: any[]) => ``,
-    not: (target: object, key: string, ...rest: any[]) => ``
-  }
+    is: (target: object, key: string, ...rest: any[]) => `validation failed, rule: ${target[key]} is ISO8601`,
+    not: (target: object, key: string, ...rest: any[]) => `validation failed, rule: ${target[key]} is not ISO8601`
+  },
   ISO31661Alpha2: {
-    is: (target: object, key: string, ...rest: any[]) => ``,
-    not: (target: object, key: string, ...rest: any[]) => ``
-  }
+    is: (target: object, key: string, ...rest: any[]) => `validation failed, rule: ${target[key]} is after ISO31661Alpha2`,
+    not: (target: object, key: string, ...rest: any[]) => `validation failed, rule: ${target[key]} is after not ISO31661Alpha2`
+  },
   ISRC: {
-    is: (target: object, key: string, ...rest: any[]) => ``,
-    not: (target: object, key: string, ...rest: any[]) => ``
-  }
+    is: (target: object, key: string, ...rest: any[]) => `validation failed, rule: ${target[key]} is after ${rest.join(', ')}`,
+    not: (target: object, key: string, ...rest: any[]) => `validation failed, rule: ${target[key]} is after ${rest.join(', ')}`
+  },
   JSON: {
-    is: (target: object, key: string, ...rest: any[]) => ``,
-    not: (target: object, key: string, ...rest: any[]) => ``
-  }
+    is: (target: object, key: string, ...rest: any[]) => `validation failed, rule: ${target[key]} is JSON`,
+    not: (target: object, key: string, ...rest: any[]) => `validation failed, rule: ${target[key]} is not JSON`
+  },
   latLong: {
-    is: (target: object, key: string, ...rest: any[]) => ``,
-    not: (target: object, key: string, ...rest: any[]) => ``
-  }
+    is: (target: object, key: string, ...rest: any[]) => `validation failed, rule: ${target[key]} is latLong`,
+    not: (target: object, key: string, ...rest: any[]) => `validation failed, rule: ${target[key]} is not latLong`
+  },
   length: {
-    is: (target: object, key: string, ...rest: any[]) => ``,
-    not: (target: object, key: string, ...rest: any[]) => ``
-  }
+    is: (target: object, key: string, ...rest: any[]) => `validation failed, rule: ${target[key]} is lenght of ${rest.join(', ')}`,
+    not: (target: object, key: string, ...rest: any[]) => `validation failed, rule: ${target[key]} is not lenght of ${rest.join(', ')}`
+  },
   lowercase: {
-    is: (target: object, key: string, ...rest: any[]) => ``,
-    not: (target: object, key: string, ...rest: any[]) => ``
-  }
+    is: (target: object, key: string, ...rest: any[]) => `validation failed, rule: ${target[key]} is lowercase`,
+    not: (target: object, key: string, ...rest: any[]) => `validation failed, rule: ${target[key]} is not lowercase`
+  },
   MACAddress: {
-    is: (target: object, key: string, ...rest: any[]) => ``,
-    not: (target: object, key: string, ...rest: any[]) => ``
-  }
+    is: (target: object, key: string, ...rest: any[]) => `validation failed, rule: ${target[key]} is MAC address`,
+    not: (target: object, key: string, ...rest: any[]) => `validation failed, rule: ${target[key]} is not MAC address`
+  },
   MD5: {
-    is: (target: object, key: string, ...rest: any[]) => ``,
-    not: (target: object, key: string, ...rest: any[]) => ``
-  }
+    is: (target: object, key: string, ...rest: any[]) => `validation failed, rule: ${target[key]} is MD5`,
+    not: (target: object, key: string, ...rest: any[]) => `validation failed, rule: ${target[key]} is not MD5`
+  },
   mimeType: {
-    is: (target: object, key: string, ...rest: any[]) => ``,
-    not: (target: object, key: string, ...rest: any[]) => ``
-  }
+    is: (target: object, key: string, ...rest: any[]) => `validation failed, rule: ${target[key]} is minetype`,
+    not: (target: object, key: string, ...rest: any[]) => `validation failed, rule: ${target[key]} is not minetype`
+  },
   mobilePhone: {
-    is: (target: object, key: string, ...rest: any[]) => ``,
-    not: (target: object, key: string, ...rest: any[]) => ``
-  }
+    is: (target: object, key: string, ...rest: any[]) => `validation failed, rule: ${target[key]} is mobile phone`,
+    not: (target: object, key: string, ...rest: any[]) => `validation failed, rule: ${target[key]} is not mobile phone`
+  },
   mongoId: {
-    is: (target: object, key: string, ...rest: any[]) => ``,
-    not: (target: object, key: string, ...rest: any[]) => ``
-  }
+    is: (target: object, key: string, ...rest: any[]) => `validation failed, rule: ${target[key]} is mongoId`,
+    not: (target: object, key: string, ...rest: any[]) => `validation failed, rule: ${target[key]} is not mongoId`
+  },
   multibyte: {
-    is: (target: object, key: string, ...rest: any[]) => ``,
-    not: (target: object, key: string, ...rest: any[]) => ``
-  }
+    is: (target: object, key: string, ...rest: any[]) => `validation failed, rule: ${target[key]} is multi-byte`,
+    not: (target: object, key: string, ...rest: any[]) => `validation failed, rule: ${target[key]} is not multi-byte`
+  },
   numeric: {
-    is: (target: object, key: string, ...rest: any[]) => ``,
-    not: (target: object, key: string, ...rest: any[]) => ``
-  }
+    is: (target: object, key: string, ...rest: any[]) => `validation failed, rule: ${target[key]} is numeric`,
+    not: (target: object, key: string, ...rest: any[]) => `validation failed, rule: ${target[key]} is not numeric`
+  },
   postalCode: {
-    is: (target: object, key: string, ...rest: any[]) => ``,
-    not: (target: object, key: string, ...rest: any[]) => ``
-  }
+    is: (target: object, key: string, ...rest: any[]) => `validation failed, rule: ${target[key]} is postal code`,
+    not: (target: object, key: string, ...rest: any[]) => `validation failed, rule: ${target[key]} is not postal code`
+  },
   surrogatePair: {
-    is: (target: object, key: string, ...rest: any[]) => ``,
-    not: (target: object, key: string, ...rest: any[]) => ``
-  }
+    is: (target: object, key: string, ...rest: any[]) => `validation failed, rule: ${target[key]} is surrogate pair`,
+    not: (target: object, key: string, ...rest: any[]) => `validation failed, rule: ${target[key]} is not surrogate pair`
+  },
   URL: {
-    is: (target: object, key: string, ...rest: any[]) => ``,
-    not: (target: object, key: string, ...rest: any[]) => ``
-  }
+    is: (target: object, key: string, ...rest: any[]) => `validation failed, rule: ${target[key]} is URL`,
+    not: (target: object, key: string, ...rest: any[]) => `validation failed, rule: ${target[key]} is not URL`
+  },
   UUID: {
-    is: (target: object, key: string, ...rest: any[]) => ``,
-    not: (target: object, key: string, ...rest: any[]) => ``
-  }
+    is: (target: object, key: string, ...rest: any[]) => `validation failed, rule: ${target[key]} is UUID`,
+    not: (target: object, key: string, ...rest: any[]) => `validation failed, rule: ${target[key]} is not UUID`
+  },
   uppercase: {
-    is: (target: object, key: string, ...rest: any[]) => ``,
-    not: (target: object, key: string, ...rest: any[]) => ``
-  }
+    is: (target: object, key: string, ...rest: any[]) => `validation failed, rule: ${target[key]} is uppercase`,
+    not: (target: object, key: string, ...rest: any[]) => `validation failed, rule: ${target[key]} is not uppercase`
+  },
   variableWidth: {
-    is: (target: object, key: string, ...rest: any[]) => ``,
-    not: (target: object, key: string, ...rest: any[]) => ``
-  }
+    is: (target: object, key: string, ...rest: any[]) => `validation failed, rule: ${target[key]} is variable width`,
+    not: (target: object, key: string, ...rest: any[]) => `validation failed, rule: ${target[key]} is not variable width`
+  },
   whitelisted: {
-    is: (target: object, key: string, ...rest: any[]) => ``,
-    not: (target: object, key: string, ...rest: any[]) => ``
-  }
+    is: (target: object, key: string, ...rest: any[]) => `validation failed, rule: ${target[key]} characters is white listed (${rest.join('')})`,
+    not: (target: object, key: string, ...rest: any[]) => `validation failed, rule: ${target[key]} characters is white listed (${rest.join('')})`
+  },
   matches: {
-    is: (target: object, key: string, ...rest: any[]) => ``,
-    not: (target: object, key: string, ...rest: any[]) => ``
-  }
+    is: (target: object, key: string, ...rest: any[]) => `validation failed, rule: ${target[key]} matches ${rest.join('')}`,
+    not: (target: object, key: string, ...rest: any[]) => `validation failed, rule: ${target[key]} not matches ${rest.join('')}`
+  },
   decimal: {
-    is: (target: object, key: string, ...rest: any[]) => ``,
-    not: (target: object, key: string, ...rest: any[]) => ``
-  }
+    is: (target: object, key: string, ...rest: any[]) => `validation failed, rule: ${target[key]} is decimal`,
+    not: (target: object, key: string, ...rest: any[]) => `validation failed, rule: ${target[key]} is not decimal`
+  },
   divisibleBy: {
-    is: (target: object, key: string, ...rest: any[]) => ``,
-    not: (target: object, key: string, ...rest: any[]) => ``
-  }
+    is: (target: object, key: string, ...rest: any[]) => `validation failed, rule: ${target[key]} is divisible by ${rest[0]}`,
+    not: (target: object, key: string, ...rest: any[]) => `validation failed, rule: ${target[key]} is not divisible by ${rest[0]}`
+  },
   float: {
-    is: (target: object, key: string, ...rest: any[]) => ``,
-    not: (target: object, key: string, ...rest: any[]) => ``
-  }
+    is: (target: object, key: string, ...rest: any[]) => `validation failed, rule: ${target[key]} is float`,
+    not: (target: object, key: string, ...rest: any[]) => `validation failed, rule: ${target[key]} is not float`
+  },
   int: {
-    is: (target: object, key: string, ...rest: any[]) => ``,
-    not: (target: object, key: string, ...rest: any[]) => ``
-  }
+    is: (target: object, key: string, ...rest: any[]) => `validation failed, rule: ${target[key]} is int`,
+    not: (target: object, key: string, ...rest: any[]) => `validation failed, rule: ${target[key]} is not int`
+  },
   port: {
-    is: (target: object, key: string, ...rest: any[]) => ``,
-    not: (target: object, key: string, ...rest: any[]) => ``
-  }
+    is: (target: object, key: string, ...rest: any[]) => `validation failed, rule: ${target[key]} is port`,
+    not: (target: object, key: string, ...rest: any[]) => `validation failed, rule: ${target[key]} is not port`
+  },
   equals: {
-    is: (target: object, key: string, ...rest: any[]) => ``,
-    not: (target: object, key: string, ...rest: any[]) => ``
-  }
+    is: (target: object, key: string, ...rest: any[]) => `validation failed, rule: ${target[key]} equals ${rest[0]}`,
+    not: (target: object, key: string, ...rest: any[]) => `validation failed, rule: ${target[key]} not equals ${rest[0]}`
+  },
+  doubleEquals: {
+    is: (target: object, key: string, ...rest: any[]) => `validation failed, rule: ${target[key]} == ${rest[0]}`,
+    not: (target: object, key: string, ...rest: any[]) => `validation failed, rule: ${target[key]} != ${rest[0]}`
+  },
+  tribleEquals: {
+    is: (target: object, key: string, ...rest: any[]) => `validation failed, rule: ${target[key]} === ${rest[0]}`,
+    not: (target: object, key: string, ...rest: any[]) => `validation failed, rule: ${target[key]} !== ${rest[0]}`
+  },
   empty: {
-    is: (target: object, key: string, ...rest: any[]) => ``,
-    not: (target: object, key: string, ...rest: any[]) => ``
-  }
+    is: (target: object, key: string, ...rest: any[]) => `validation failed, rule: ${target[key]} is empty`,
+    not: (target: object, key: string, ...rest: any[]) => `validation failed, rule: ${target[key]} is not empty`
+  },
   required: {
-    is: (target: object, key: string, ...rest: any[]) => ``,
-    not: (target: object, key: string, ...rest: any[]) => ``
-  }
+    is: (target: object, key: string, ...rest: any[]) => `validation failed, rule: ${target[key]} is required`,
+    not: (target: object, key: string, ...rest: any[]) => `validation failed, rule: ${target[key]} is not required`
+  },
   in: {
-    is: (target: object, key: string, ...rest: any[]) => ``,
-    not: (target: object, key: string, ...rest: any[]) => ``
-  }
+    is: (target: object, key: string, ...rest: any[]) => `validation failed, rule: ${target[key]} is in [${rest.join(', ')}]`,
+    not: (target: object, key: string, ...rest: any[]) => `validation failed, rule: ${target[key]} is not in [${rest.join(', ')}]`
+  },
   func: {
-    is: (target: object, key: string, ...rest: any[]) => ``,
-    not: (target: object, key: string, ...rest: any[]) => ``
-  }
-  type: {
-    is: (target: object, key: string, ...rest: any[]) => ``,
-    not: (target: object, key: string, ...rest: any[]) => ``
+    is: (target: object, key: string, ...rest: any[]) => `validation failed, rule: ${target[key]} is func()`,
+    not: (target: object, key: string, ...rest: any[]) => `validation failed, rule: ${target[key]} is not func()`
+  },
+  class: {
+    is: (target: object, key: string, ...rest: any[]) => `validation failed, rule: ${target[key]} is type of ${rest[0].prototype.toString()}`,
+    not: (target: object, key: string, ...rest: any[]) => `validation failed, rule: ${target[key]} is not type of ${rest[0].prototype.toString()}`
   }
 }
 
@@ -766,8 +798,8 @@ export function validate(...rules: Array<Rule>) {
   }
 }
 
-export declare var is: IS;
-export declare var not: IS
-is = new IS();
-not = new IS();
+export declare var is: RuleCreator;
+export declare var not: RuleCreator
+is = new RuleCreator(false);
+not = new RuleCreator(true);
 
