@@ -5,11 +5,15 @@ const METADATA_KEY = 'validate';
 
 type RuleValidate = (target: object, key: string) => boolean | string;
 type RuleMessage = string | ((target: object, key: string) => string);
-
+const CLASS_RULE = Symbol('CLASS_RULE');
 class Rule {
   private _validate: RuleValidate;
   private _onlyIf: RuleValidate;
   private _message: RuleMessage;
+  private _name: string | symbol;
+  get name() {
+    return this._name;
+  }
   constructor(
     validate: RuleValidate,
     message?: RuleMessage,
@@ -29,6 +33,7 @@ class Rule {
 
   // Validate value with current rule, ctx normally is the class instance
   validate(target: object, key: string): boolean | string {
+    let rest = Array.prototype.slice.call(arguments, 2);
     if (this._onlyIf && !this._onlyIf(target, key)) {
       return true;
     }
@@ -44,14 +49,14 @@ class Rule {
       return this._message(target, key);
     }
     return this._message;
-  }
-  // copy a new Rule with specified message
+  } 
   message(message: RuleMessage): Rule {
-    return new Rule(this._validate, message, this._onlyIf);
-  }
-  // copy a new Rule with specified onlyIf condition
+    this._message = message;
+    return this;
+  } 
   onlyIf(condition: RuleValidate): Rule {
-    return new Rule(this._validate, this._message, condition)
+    this._onlyIf = condition;
+    return this;
   }
 }
 
@@ -457,10 +462,12 @@ class RuleCreator {
     );
   }
   class(TClass: new () => any): Rule {
-    return new Rule(
-      this.proxyCall((target, key) => isClass(TClass, target[key])),
+    let rule = new Rule(
+      this.proxyCall((target, key, ...rest: any[]) => (isClass as any)(TClass, target[key], ...rest)),
       this.proxyGetLocaleMessage('class', TClass)
     );
+    (rule as any).__TClass = TClass;
+    return rule;
   }
 }
 
@@ -690,8 +697,8 @@ const LocaleErrorMessages = {
     not: (target: object, key: string, ...rest: any[]) => `${target[key]} is not func()`
   },
   class: {
-    is: (target: object, key: string, ...rest: any[]) => `${target[key]} is type of ${rest[0].toString()}`,
-    not: (target: object, key: string, ...rest: any[]) => `${target[key]} is not type of ${rest[0].toString()}`
+    is: (target: object, key: string, ...rest: any[]) => `${key} is type of ${rest[0].toString()}`,
+    not: (target: object, key: string, ...rest: any[]) => `${key} is not type of ${rest[0].toString()}`
   }
 }
 
@@ -729,8 +736,6 @@ export function getRules<T>(TClass: new () => T): { [name: string]: Array<Rule> 
   })
   return rules;
 }
-
-
 
 export function and(...rules: Array<Rule>): Rule {
   if (rules.length === 0) throw new Error('and must accept at lease one rule');
@@ -783,6 +788,8 @@ export function each(...rules: Array<Rule>): Rule {
   });
 }
 
+
+
 export function isClass(TClass: new () => any, target: object): boolean | string {
   const keyRules = getRules(TClass);
   for (let key in keyRules) {
@@ -799,14 +806,44 @@ export function isClass(TClass: new () => any, target: object): boolean | string
   return true;
 }
 
-export function validateGet<T>(TClass: new () => T, target: object): T {
-  let isValidate = isClass(TClass, target);
-  if (isValidate) {
-    var instance = new TClass();
+interface ValidateGetOptions {
+  filterUnvalidateFields?: boolean;
+}
+export function validateGet<T>(
+  TClass: new () => T, target: object,
+  options: ValidateGetOptions = { filterUnvalidateFields: true }): { instance?: T, message?: string | boolean } {
+
+  const keyRules = getRules(TClass);
+  let instance = new TClass();
+  if (options.filterUnvalidateFields) {
+    for (let key in keyRules) {
+
+      let value = target[key];
+      for (let rule of keyRules[key]) {
+        if (Array.isArray(rule)) {
+          rule = and(rule);
+        }
+        let each = rule.validate(target, key);
+        if (each !== true) {
+          return { message: each };
+        }
+        // if there is a nested class, we nested call validateGet
+        let nestedTClass = (rule as any).__TClass;
+
+        if (nestedTClass !== undefined) {
+          value = validateGet(nestedTClass, value, options).instance;
+        }
+      }
+      Object.assign(instance, { [key]: value })
+    }
+  } else {
+    let vResult = isClass(TClass, target);
+    if (vResult !== true) {
+      return { message: vResult };
+    }
     Object.assign(instance, target);
-    return instance;
   }
-  return null;
+  return { instance };
 }
 
 export function validate(...rules: Array<Rule>) {
