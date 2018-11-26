@@ -64,20 +64,20 @@ class MixinClass implements IdClass, NameClass {
 // 不支持继承复用
 
 test('each', () => {
-  expect(isClass({ id: ['111'] }, IdClass)).toBe(true);
-  expect(isClass({ id: ['111', '3'] }, IdClass)).not.toBe(true);
+  expect(isClass(IdClass, { id: ['111'] })).toBe(true);
+  expect(isClass(IdClass, { id: ['111', '3'] })).not.toBe(true);
 });
 
 test('is string', () => {
-  expect(isClass({ name: '360sdfsdf' }, NameClass)).toBe(true);
-  expect(isClass({ name: '360' }, NameClass)).not.toBe(true);
-  expect(isClass({ name: '13602545698' }, NameClass)).not.toBe(true);
-  expect(isClass({ name: 'sdfsdfs' }, NameClass)).not.toBe(true);
+  expect(isClass(NameClass, { name: '360sdfsdf' })).toBe(true);
+  expect(isClass(NameClass, { name: '360' })).not.toBe(true);
+  expect(isClass(NameClass, { name: '13602545698' })).not.toBe(true);
+  expect(isClass(NameClass, { name: 'sdfsdfs' })).not.toBe(true);
 });
 
 test('nexted class', () => {
-  expect(isClass({ id: { id: ['122'] } }, NestedClass)).toBe(true);
-  expect(isClass({ id: 111 }, NestedClass)).not.toBe(true);
+  expect(isClass(NestedClass, { id: { id: ['122'] } })).toBe(true);
+  expect(isClass(NestedClass, { id: 111 })).not.toBe(true);
 });
 
 test('deeply nested class', () => {
@@ -88,7 +88,7 @@ test('deeply nested class', () => {
       }
     }
   }
-  expect(isClass(target1, DeeplyNestedClass)).toBe(true);
+  expect(isClass(DeeplyNestedClass, target1)).toBe(true);
   let target2 = {
     value: {
       id: {
@@ -96,38 +96,38 @@ test('deeply nested class', () => {
       }
     }
   }
-  expect(isClass(target2, DeeplyNestedClass)).not.toBe(true);
+  expect(isClass(DeeplyNestedClass, target2)).not.toBe(true);
 })
 
 test('and or logic', () => {
-  expect(isClass({ value: 1 }, AndOrClass)).toBe(true)
-  expect(isClass({ value: 2 }, AndOrClass)).toBe(true)
-  expect(isClass({ value: 3 }, AndOrClass)).toBe(true)
-  expect(isClass({ value: 4 }, AndOrClass)).toBe(true)
-  expect(isClass({ value: 5 }, AndOrClass)).not.toBe(true)
-  expect(isClass({ value: 6 }, AndOrClass)).toBe(true)
-  expect(isClass({ value: 7 }, AndOrClass)).not.toBe(true)
+  expect(isClass(AndOrClass, { value: 1 })).toBe(true)
+  expect(isClass(AndOrClass, { value: 2 })).toBe(true)
+  expect(isClass(AndOrClass, { value: 3 })).toBe(true)
+  expect(isClass(AndOrClass, { value: 4 })).toBe(true)
+  expect(isClass(AndOrClass, { value: 5 })).not.toBe(true)
+  expect(isClass(AndOrClass, { value: 6 })).toBe(true)
+  expect(isClass(AndOrClass, { value: 7 })).not.toBe(true)
 })
 
 test('onlyIf', () => {
-  expect(isClass({ status: 4 }, OnlyIfClass)).toBe(true);
-  expect(isClass({ status: 4, value2: 1 }, OnlyIfClass)).not.toBe(true);
-  expect(isClass({ status: 1, value2: 1 }, OnlyIfClass)).toBe(true);
-  expect(isClass({ status: 2, value2: 1 }, OnlyIfClass)).toBe(true);
-  expect(isClass({ status: 3, value2: 1 }, OnlyIfClass)).toBe(true);
-  expect(isClass({ status: 3, value2: 'sdk' }, OnlyIfClass)).not.toBe(true);
+  expect(isClass(OnlyIfClass, { status: 4 })).toBe(true);
+  expect(isClass(OnlyIfClass, { status: 4, value2: 1 })).not.toBe(true);
+  expect(isClass(OnlyIfClass, { status: 1, value2: 1 })).toBe(true);
+  expect(isClass(OnlyIfClass, { status: 2, value2: 1 })).toBe(true);
+  expect(isClass(OnlyIfClass, { status: 3, value2: 1 })).toBe(true);
+  expect(isClass(OnlyIfClass, { status: 3, value2: 'sdk' })).not.toBe(true);
 });
 
 test('customize message', () => {
-  expect(isClass({}, CustomizeMessageClass)).toBe('field is required!!');
-  expect(isClass({ field: 'other value' }, CustomizeMessageClass)).toBe('field must equals to some vlaue!!');
-  expect(isClass({ field: 'some value' }, CustomizeMessageClass)).toBe('field must be 1,2 or 3, just kidding LOL.');
+  expect(isClass(CustomizeMessageClass, {})).toBe('field is required!!');
+  expect(isClass(CustomizeMessageClass, { field: 'other value' })).toBe('field must equals to some vlaue!!');
+  expect(isClass(CustomizeMessageClass, { field: 'some value' })).toBe('field must be 1,2 or 3, just kidding LOL.');
 });
 
 test('mixin', () => {
-  expect(isClass({ id: [1], name: '360name' }, MixinClass)).toBe(true);
-  expect(isClass({ id: [1, '3'], name: '360name' }, MixinClass)).not.toBe(true);
-  expect(isClass({ id: [1], name: '234name' }, MixinClass)).not.toBe(true);
-  expect(isClass({ id: [1], name: '234namesd too long' }, MixinClass)).not.toBe(true);
-  expect(isClass({ id: [1], name: 'sfa' }, MixinClass)).not.toBe(true);
+  expect(isClass(MixinClass, { id: [1], name: '360name' })).toBe(true);
+  expect(isClass(MixinClass, { id: [1, '3'], name: '360name' })).not.toBe(true);
+  expect(isClass(MixinClass, { id: [1], name: '234name' })).not.toBe(true);
+  expect(isClass(MixinClass, { id: [1], name: '234namesd too long' })).not.toBe(true);
+  expect(isClass(MixinClass, { id: [1], name: 'sfa' })).not.toBe(true);
 })

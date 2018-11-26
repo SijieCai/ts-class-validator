@@ -456,9 +456,9 @@ class RuleCreator {
       this.proxyGetLocaleMessage('func')
     );
   }
-  class(TClass: new () => any, fieldsPattern?: string): Rule {
+  class(TClass: new () => any): Rule {
     return new Rule(
-      this.proxyCall((target, key) => isClass(target[key], TClass, fieldsPattern)),
+      this.proxyCall((target, key) => isClass(TClass, target[key])),
       this.proxyGetLocaleMessage('class', TClass)
     );
   }
@@ -730,11 +730,7 @@ export function getRules<T>(TClass: new () => T): { [name: string]: Array<Rule> 
   return rules;
 }
 
-function validateGet<T>(TClass: new () => T): T {
-  var fields = Object.keys(TClass.prototype.__validators).join(',');
-  var instance = new TClass();
-  return Object.assign(instance, this.get(fields));
-}
+
 
 export function and(...rules: Array<Rule>): Rule {
   if (rules.length === 0) throw new Error('and must accept at lease one rule');
@@ -787,7 +783,7 @@ export function each(...rules: Array<Rule>): Rule {
   });
 }
 
-export function isClass(target: any, TClass: new () => any, fieldsPattern?: string): boolean | string {
+export function isClass(TClass: new () => any, target: object): boolean | string {
   const keyRules = getRules(TClass);
   for (let key in keyRules) {
     for (let rule of keyRules[key]) {
@@ -803,6 +799,16 @@ export function isClass(target: any, TClass: new () => any, fieldsPattern?: stri
   return true;
 }
 
+export function validateGet<T>(TClass: new () => T, target: object): T {
+  let isValidate = isClass(TClass, target);
+  if (isValidate) {
+    var instance = new TClass();
+    Object.assign(instance, target);
+    return instance;
+  }
+  return null;
+}
+
 export function validate(...rules: Array<Rule>) {
   return function (target: any, key: string | symbol) {
     target.__validators = target.__validators || [];
@@ -815,4 +821,3 @@ export declare var is: RuleCreator;
 export declare var not: RuleCreator
 is = new RuleCreator(false);
 not = new RuleCreator(true);
-
