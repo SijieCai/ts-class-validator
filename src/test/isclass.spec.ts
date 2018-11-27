@@ -1,4 +1,4 @@
-import { validate, is, not, and, or, each, isClass, mixins } from '../src/index';
+import { validate, is, not, and, or, each, isClass, mixins } from '../index';
 
 class IdClass {
   @validate(each(
@@ -7,6 +7,14 @@ class IdClass {
     is.required()
   ))
   id: number[];
+}
+
+
+class Id2Class {
+  @validate(each(
+    each(is.int(), is.required(), not.doubleEquals(2))
+  ))
+  id: number[][];
 }
 
 class NameClass {
@@ -59,13 +67,18 @@ class CustomizeMessageClass {
 class MixinClass implements IdClass, NameClass {
   name: string;
   id: number[];
+  @validate(
+    is.int(),
+    is.required()
+  )
+  numberValue: number;
 }
 
 // 不支持继承复用
 
 test('each', () => {
-  expect(isClass(IdClass, { id: ['111'] })).toBe(true);
-  expect(isClass(IdClass, { id: ['111', '3'] })).not.toBe(true);
+  expect(isClass(IdClass, { id: [111] })).toBe(true);
+  expect(isClass(IdClass, { id: [111, 3] })).not.toBe(true);
 });
 
 test('is string', () => {
@@ -125,9 +138,9 @@ test('customize message', () => {
 });
 
 test('mixin', () => {
-  expect(isClass(MixinClass, { id: [1], name: '360name' })).toBe(true);
-  expect(isClass(MixinClass, { id: [1, '3'], name: '360name' })).not.toBe(true);
-  expect(isClass(MixinClass, { id: [1], name: '234name' })).not.toBe(true);
-  expect(isClass(MixinClass, { id: [1], name: '234namesd too long' })).not.toBe(true);
-  expect(isClass(MixinClass, { id: [1], name: 'sfa' })).not.toBe(true);
+  expect(isClass(MixinClass, { id: [1], name: '360name', numberValue: 1 })).toBe(true);
+  expect(isClass(MixinClass, { id: [1, '3'], name: '360name', numberValue: 1 })).not.toBe(true);
+  expect(isClass(MixinClass, { id: [1], name: '234name', numberValue: 1 })).not.toBe(true);
+  expect(isClass(MixinClass, { id: [1], name: '234namesd too long', numberValue: 1 })).not.toBe(true);
+  expect(isClass(MixinClass, { id: [1], name: 'sfa', numberValue: 1 })).not.toBe(true);
 })

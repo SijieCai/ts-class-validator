@@ -5,30 +5,45 @@ const METADATA_KEY = 'validate';
 
 type RuleValidate = (target: object, key: string) => boolean | string;
 type RuleMessage = string | ((target: object, key: string) => string);
-const CLASS_RULE = Symbol('CLASS_RULE');
+type RuleParser = (value: any, options: ValidateGetOptions) => any;
+interface ValidateGetOptions {
+  filterUnvalidateFields?: boolean;
+  parseNumber?: boolean;
+  parseArray?: boolean;
+  [name: string]: any
+}
+
+const defaultValidateGetOptions: ValidateGetOptions = { filterUnvalidateFields: true, parseArray: true, parseNumber: true };
+
+function intParser(value: any, options: ValidateGetOptions) {
+  if (options.parseNumber) return parseInt(value);
+  return value;
+}
+
+function floatParser(value: any, options: ValidateGetOptions) {
+  if (options.parseNumber) return parseFloat(value);
+  return value;
+}
+
+
 class Rule {
   private _validate: RuleValidate;
   private _onlyIf: RuleValidate;
   private _message: RuleMessage;
-  private _name: string | symbol;
-  get name() {
-    return this._name;
-  }
+  private _parser: RuleParser;
+
   constructor(
     validate: RuleValidate,
     message?: RuleMessage,
-    condition?: RuleValidate
+    parser?: RuleParser
   ) {
     if (typeof validate !== 'function') {
       throw new Error('validate must be function type')
     }
 
-    if (condition && typeof condition !== 'function') {
-      throw new Error('condition must be function type')
-    }
     this._validate = validate;
     this._message = message;
-    this._onlyIf = condition;
+    this._parser = parser;
   }
 
   // Validate value with current rule, ctx normally is the class instance
@@ -49,12 +64,15 @@ class Rule {
       return this._message(target, key);
     }
     return this._message;
-  } 
+  }
   message(message: RuleMessage): Rule {
     this._message = message;
     return this;
-  } 
+  }
   onlyIf(condition: RuleValidate): Rule {
+    if (condition && typeof condition !== 'function') {
+      throw new Error('condition must be function type')
+    }
     this._onlyIf = condition;
     return this;
   }
@@ -371,7 +389,8 @@ class RuleCreator {
   decimal(options?: ValidatorJS.IsDecimalOptions): Rule {
     return new Rule(
       this.proxyCallValidator('isDecimal', options),
-      this.proxyGetLocaleMessage('decimal', options)
+      this.proxyGetLocaleMessage('decimal', options),
+      floatParser
     );
   }
 
@@ -379,7 +398,8 @@ class RuleCreator {
   divisibleBy(number: number): Rule {
     return new Rule(
       this.proxyCallValidator('isDivisibleBy', number),
-      this.proxyGetLocaleMessage('divisibleBy', number)
+      this.proxyGetLocaleMessage('divisibleBy', number),
+      floatParser
     );
   }
 
@@ -388,7 +408,8 @@ class RuleCreator {
   float(options?: ValidatorJS.IsFloatOptions): Rule {
     return new Rule(
       this.proxyCallValidator('isFloat', options),
-      this.proxyGetLocaleMessage('float', options)
+      this.proxyGetLocaleMessage('float', options),
+      floatParser
     );
   }
 
@@ -396,7 +417,8 @@ class RuleCreator {
   int(options?: ValidatorJS.IsIntOptions): Rule {
     return new Rule(
       this.proxyCallValidator('isInt', options),
-      this.proxyGetLocaleMessage('int', options)
+      this.proxyGetLocaleMessage('int', options),
+      intParser
     );
   }
 
@@ -462,12 +484,11 @@ class RuleCreator {
     );
   }
   class(TClass: new () => any): Rule {
-    let rule = new Rule(
+    return new Rule(
       this.proxyCall((target, key, ...rest: any[]) => (isClass as any)(TClass, target[key], ...rest)),
-      this.proxyGetLocaleMessage('class', TClass)
+      this.proxyGetLocaleMessage('class', TClass),
+      (value: any, options: ValidateGetOptions) => validateGet(TClass, value, options).instance
     );
-    (rule as any).__TClass = TClass;
-    return rule;
   }
 }
 
@@ -702,7 +723,6 @@ const LocaleErrorMessages = {
   }
 }
 
-
 export function setErrorMessage(setting: any) {
   Object.assign(LocaleErrorMessages, setting)
 }
@@ -767,11 +787,21 @@ export function or(...rules: Array<Rule>): Rule {
     return messages.join(' or ');
   });
 }
-
+function arrayParser(value: any, options: ValidateGetOptions): any[] {
+  if (options.parseArray && !Array.isArray(value)) {
+    if (typeof (value) === 'string') {
+      return value.split(',');
+    }
+    return [value];
+  }
+  return value;
+}
 export function each(...rules: Array<Rule>): Rule {
   let rule = and(...rules);
-  return new Rule(function (target, key) {
-    let value = target[key] as Array<any>;
+  function validateEach(target: object, key: string) {
+    let value = target[key];
+
+    value = arrayParser(value, { parseArray: true });
     if (!Array.isArray(value)) {
       return `target.${key} is not array`;
     }
@@ -785,7 +815,25 @@ export function each(...rules: Array<Rule>): Rule {
       }
     }
     return true;
-  });
+  }
+  return new Rule(
+    validateEach,
+    undefined,
+    (value, options) => {
+      value = arrayParser(value, options);
+      if (options.parseArray) {
+        for (let i = 0; i < value.length; i++) {
+          for(let rule of rules) {
+            let parser = (rule as any)._parser;
+            if(parser) {
+              value[i] = parser(value[i], options);
+            }
+          }
+        }
+      }
+      return value;
+    }
+  );
 }
 
 
@@ -806,42 +854,38 @@ export function isClass(TClass: new () => any, target: object): boolean | string
   return true;
 }
 
-interface ValidateGetOptions {
-  filterUnvalidateFields?: boolean;
-}
 export function validateGet<T>(
   TClass: new () => T, target: object,
-  options: ValidateGetOptions = { filterUnvalidateFields: true }): { instance?: T, message?: string | boolean } {
-
+  options?: ValidateGetOptions): { instance?: T, message?: string | boolean } {
+  options = Object.assign({}, defaultValidateGetOptions, options);
   const keyRules = getRules(TClass);
   let instance = new TClass();
-  if (options.filterUnvalidateFields) {
-    for (let key in keyRules) {
 
-      let value = target[key];
-      for (let rule of keyRules[key]) {
-        if (Array.isArray(rule)) {
-          rule = and(rule);
-        }
-        let each = rule.validate(target, key);
-        if (each !== true) {
-          return { message: each };
-        }
-        // if there is a nested class, we nested call validateGet
-        let nestedTClass = (rule as any).__TClass;
-
-        if (nestedTClass !== undefined) {
-          value = validateGet(nestedTClass, value, options).instance;
-        }
+  for (let key in keyRules) {
+    let value = target[key];
+    for (let rule of keyRules[key]) {
+      if (Array.isArray(rule)) {
+        rule = and(rule);
       }
-      Object.assign(instance, { [key]: value })
+      let each = rule.validate(target, key);
+      if (each !== true) {
+        return { message: each };
+      }
+      // if there is a parser
+      let parser = (rule as any)._parser
+      if (parser) {
+        value = parser(value, options);
+      }
     }
-  } else {
-    let vResult = isClass(TClass, target);
-    if (vResult !== true) {
-      return { message: vResult };
+
+    Object.assign(instance, { [key]: value })
+  }
+  if (!options.filterUnvalidateFields) {
+    for (let key in target) {
+      if (!keyRules[key]) {
+        (instance as any)[key] = target[key];
+      }
     }
-    Object.assign(instance, target);
   }
   return { instance };
 }

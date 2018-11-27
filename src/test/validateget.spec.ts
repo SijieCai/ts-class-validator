@@ -1,4 +1,4 @@
-import { validate, is, not, and, or, each, isClass, validateGet, mixins } from '../src/index';
+import { validate, is, not, and, or, each, isClass, validateGet, mixins } from '../index';
 
 class IdClass {
   @validate(each(
@@ -7,6 +7,10 @@ class IdClass {
     is.required()
   ))
   id: number[];
+
+  hello() {
+    console.log('slkfjdsjfs', this.id);
+  }
 }
 
 class NameClass {
@@ -37,11 +41,9 @@ class AndOrClass {
   value: number;
 }
 
-class OnlyIfClass {
-  @validate(is.in([1, 2, 3]).onlyIf(target => target['value2'] !== undefined))
-  status: number;
-  @validate(is.int())
-  value2: number;
+class ParseIntClass {
+  @validate(is.int(), is.required())
+  value: number;
 }
 
 class CustomizeMessageClass {
@@ -58,6 +60,9 @@ class CustomizeMessageClass {
 
 @mixins(IdClass, NameClass)
 class MixinClass implements IdClass, NameClass {
+  hello(): void {
+    throw new Error("Method not implemented.");
+  }
   name: string;
   id: number[];
 }
@@ -126,5 +131,26 @@ test('validateGet deeply nested class', () => {
       }
     }
   }
-  expect(validateGet(DeeplyNestedClass, target2)).toEqual({message: 'value must be of NestedClass'});
+  expect(validateGet(DeeplyNestedClass, target2)).toEqual({ message: 'value must be of NestedClass' });
+});
+
+test('validateGet mixin', () => {
+  expect(isClass(MixinClass, { id: [1], name: '360name' })).toBe(true);
+  expect(isClass(MixinClass, { id: [1, '3'], name: '360name' })).not.toBe(true);
+  expect(isClass(MixinClass, { id: [1], name: '234name' })).not.toBe(true);
+  expect(isClass(MixinClass, { id: [1], name: '234namesd too long' })).not.toBe(true);
+  expect(isClass(MixinClass, { id: [1], name: 'sfa' })).not.toBe(true);
+})
+
+test('validateGet parseInt', () => {
+  expect(validateGet(ParseIntClass, { value: '1234' }).instance).toEqual({ value: 1234 });
+});
+
+test('validateGet parseArray', () => {
+  expect(validateGet(IdClass, { id: '1,2,3' })).toEqual({ message: '3 is not in [3]' });
+  expect(validateGet(IdClass, { id: '1,2' })).toEqual({ instance: { id: [1, 2] } });
+});
+test('validateGet not parseArray', () => {
+  expect(validateGet(IdClass, { id: '1,2,3' }, { parseArray: false })).toEqual({ message: '3 is not in [3]' });
+  expect(validateGet(IdClass, { id: '1,2' }, { parseArray: false })).toEqual({ instance: { id: '1,2' } });
 });
