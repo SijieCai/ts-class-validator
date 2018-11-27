@@ -9,7 +9,7 @@ class IdClass {
   id: number[];
 
   hello() {
-    console.log('slkfjdsjfs', this.id);
+    return 'hello use minxin class'
   }
 }
 
@@ -60,9 +60,7 @@ class CustomizeMessageClass {
 
 @mixins(IdClass, NameClass)
 class MixinClass implements IdClass, NameClass {
-  hello(): void {
-    throw new Error("Method not implemented.");
-  }
+  hello: () => string
   name: string;
   id: number[];
 }
@@ -154,3 +152,15 @@ test('validateGet not parseArray', () => {
   expect(validateGet(IdClass, { id: '1,2,3' }, { parseArray: false })).toEqual({ message: '3 is not in [3]' });
   expect(validateGet(IdClass, { id: '1,2' }, { parseArray: false })).toEqual({ instance: { id: '1,2' } });
 });
+
+
+test('validateGet mixin', () => {
+  expect(validateGet(MixinClass, { id: [1], name: '360name', numberValue: 1 }))
+    .toEqual({ instance: { id: [1], name: '360name' } });
+})
+
+test('validateGet mixin class will get inherit method', () => {
+  expect(validateGet(MixinClass, { id: [1], name: '360name' }).instance.hello())
+    .toBe('hello use minxin class');
+
+})

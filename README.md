@@ -8,25 +8,87 @@ npm install class-validator --save
 ```
 
 ## Usage
+
 ``` typescript
-import { validate, is, not, and, or, each, isClass, mixins } from 'ts-class-validator';
+import { validate, is, not, and, or, each, isClass, validateGet, mixins } from 'ts-class-validator';
 
-class IdClass {
-  @validate(each(
-    is.required(),
-    is.int(),
-    not.in([3])
-  ))
-  id: number[];
-}
+```
 
-class NameClass {
+### Primitive type validation
+
+Each validate default is not required, which means value of `null` or `undefined` will always passed validation, unless you put a `is.required()` on top.
+
+``` typescript 
+class PrimitiveClass {
   @validate(
     is.length(4, 10),
-    is.contains('360')
+    is.contains('111')
   )
   name: string;
+
+  @validate(
+    is.required(),
+    is.int({min: 1})
+  )
+  age: number;
 }
+
+isClass(PrimitiveClass, { name: '111abced', age: 5 }) // true
+isClass(PrimitiveClass, { name: '360', age: 5 }) // 'error message here'
+
+validateGet(PrimitiveClass, { name: '111abced', age: '5' }) 
+// { instance: PrimitiveClass { name: '111abced', age: 5 } }
+validateGet(PrimitiveClass, { name: '360', age: 5 }) 
+// { message: 'error message here' }
+ 
+```
+
+
+
+### Array validation
+Use each to validate array, you can even nested each to validate two-dimensional array.
+``` typescript 
+class ArrayClass {
+  @validate(
+    is.required(),
+    each(
+      is.required(),
+      is.int()
+    )
+  )
+  value: number[];
+
+  @validate(
+    each(
+      each(
+        is.int();
+      )
+    )
+  )
+  value2: number[][];
+}
+
+validateGet(ArrayClass, {value: [1,2,3]})  // { instance: ArrayClass { value: [1,2,3] } }
+
+validateGet(ArrayClass, {value: [1,2,null]}) // { message: 'error message here' }
+
+validateGet(ArrayClass, {value: '1,2,3,4'})
+// { instance: ArrayClass {value: [1,2,3,4] } }
+
+validateGet(ArrayClass, {value: '1,2,3,4'}, {parseArray: false}) 
+// { instance: ArrayClass {value: '1,2,3,4'} }
+
+validateGet(ArrayClass, {value: '1,2,3,4'}, {parseNumber: false}) 
+// { instance: ArrayClass {value: ['1','2','3','4']} }
+
+validateGet(ArrayClass, {value: '1,2', value2: [[1, 2],[3, '4']]})
+// { instance: ArrayClass {value: ['1','2'], value2: [[1,2], [3,4]]} }
+
+```
+
+### Nested class validation
+
+``` typescript 
 
 class NestedClass {
   @validate(is.class(IdClass))
@@ -38,6 +100,12 @@ class DeeplyNestedClass {
   value: NestedClass;
 }
 
+```
+
+### Logical operator
+You can use `and`, `or` logical operator, they can be nested to work as expected.
+All ValidateRule can specify `onlyIf` conditional to enable/disable this validation.
+``` typescript
 class AndOrClass {
   @validate(or(
     is.in([1, 2, 3]),
@@ -59,7 +127,10 @@ class OnlyIfClass {
   @validate(is.int())
   value2: number;
 }
+```
 
+### Customize error message
+``` typescript
 class CustomizeMessageClass {
   @validate(
     is.required().message('field is required!!'),
@@ -71,24 +142,103 @@ class CustomizeMessageClass {
   )
   field: string;
 }
+```
+
+### Mixin validation class
+
+``` typescript 
+
+class IdClass {
+  @validate(is.required(), is.int())
+  id: number;
+
+  getId() {return 'prefix-' + this.id ; }
+}
+
+class NameClass {
+  @validate(is.required(), is.length(3,10))
+  name: string;
+}
 
 @mixins(IdClass, NameClass)
 class MixinClass implements IdClass, NameClass {
   name: string;
   id: number[];
+  getId: ()=>string
 }
+
+let instance = validateGet(MixinClass, {id: 1, name: 'name'}).instance;
+console.log(instance.getId()); // 'prefix-1'
+
 
 ```
 
-
-## Validate Methods
-`is` and `not` are rule creator which support all [validator.js](https://github.com/chriso/validator.js) static methods(exclude sanitizer methods), in addition we add bellow methods:
+### Validate rules
+`is` and `not` are buildin rule creator which support all [validator.js](https://github.com/chriso/validator.js) static methods(exclude sanitizer methods), in addition we add bellow methods:
 - func(customValidator: (target: any, key: string) => boolean | string): to defined customValidator logic, basiclly you are able to write anything here.
 - class(TClass: new () => any, fieldsPattern?: string): similar to isClass, is to validate nested class type.
 - required(): value with `null` or `undifined` will failed here, while success in all other validate rules.
 - tribleEquals(value: any): compare target === value
 - doubleEquals(value: any): compare target == value
 
+### Create your own rule creator
+You can define your own rule creator which return a Rule, it can be compose and reused. For example, you want to perform a JSON parse on some fields on validation, like this:
+``` typescript
+
+class Person {/* .... */}
+
+class SomeClass {
+  @validate(
+    jsonParse(
+      is.class(Person)
+    ).message('person is not a valid JSON')
+  )
+  person: Person;
+}
+
+validateGet(SomeClass, {person: '{"person":{"name":"","age":40}}'}, {parseJSON: true})
+// SomeClass { person: Person {name: '', age: 40} }
+
+```
+To implement jsonParse as bellow:
+``` typescript
+import { Rule, and } from 'ts-class-validation';
+function jsonParse(...rules: Rule[]) {
+  return new Rule(
+    function validate(target: object, key: string) {
+      let value = target[key];
+
+      try { value = JSON.parse(value); }
+      catch (e) { return false; }
+
+      target = Object.assign({}, target, { [key]: value });
+
+      return and(...rules).validate(target, key);
+    },
+    function getMessage(target, key) { return `target.${key} is not a validate json` },
+    function validateGetParser(value, options) {
+      if (options.parseJSON) { // parseJSON passed in by validateGet(a, b, options)
+        return JSON.parse(value);
+      }
+      return value;
+    }
+  );
+}
+```
+
+### validateGet options
+`validateGet` accept a third optional params 
+
+``` typescript
+
+interface ValidateGetOptions {
+  filterUnvalidateFields?: boolean; // default ture
+  parseNumber?: boolean;      // default true
+  parseArray?: boolean;       // default true
+  [name: string]: any         // for user defined rule 
+}
+
+```
 ## Localization
 Each failed validation will display a buildin error message, you can override each rule by use `.message()` method, or you can override the default message:
 ``` typescript
@@ -109,4 +259,4 @@ setErrorMessage({
 
 ## Async Support
 No async validate method support for now!
-Async validation mixed with sync ones may cuase performance issues. why? the most of the time async validation is time consuming, we normally want to run all the sync validations successful first, and then do the async task one by one, or parallelly, depends on real situation. If we want to design the interface to support all above scenarios, it may end up with a very ugly and complecated design. Let me know if you have better idea.
+Async validation mixed with sync ones may cuase performance issues. why? Most of the time async validation is time consuming, we normally want to success all the sync validations first, and then do the async ones; one after another, or parallelly, depends on real situation. If we design the interface to support all above scenarios, it may end up ugly. Let me know if you have better idea.

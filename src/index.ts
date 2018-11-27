@@ -26,7 +26,7 @@ function floatParser(value: any, options: ValidateGetOptions) {
 }
 
 
-class Rule {
+export class Rule {
   private _validate: RuleValidate;
   private _onlyIf: RuleValidate;
   private _message: RuleMessage;
@@ -823,9 +823,9 @@ export function each(...rules: Array<Rule>): Rule {
       value = arrayParser(value, options);
       if (options.parseArray) {
         for (let i = 0; i < value.length; i++) {
-          for(let rule of rules) {
+          for (let rule of rules) {
             let parser = (rule as any)._parser;
-            if(parser) {
+            if (parser) {
               value[i] = parser(value[i], options);
             }
           }
