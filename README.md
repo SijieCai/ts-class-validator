@@ -46,7 +46,7 @@ validateGet(PrimitiveClass, { name: '360', age: 5 })
 
 
 ### Array validation
-Use each to validate array, you can even nested each to validate two-dimensional array.
+Use `each` to validate array, you can even nested `each` to validate two-dimensional array.
 ``` typescript 
 class ArrayClass {
   @validate(
