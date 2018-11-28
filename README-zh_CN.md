@@ -138,7 +138,7 @@ class OnlyIfClass {
 class CustomizeMessageClass {
   @validate(
     is.required().message('field is required!!'),
-    is.equals('some value').message('field must equals to some vlaue!!'),
+    is.equals('some value').message('field must equals to some value!!'),
     or(
       is.in([1, 2]),
       is.equals(3)
@@ -266,7 +266,7 @@ function jsonParse(...rules: Rule[]) {
 ``` typescript
 
 interface ValidateGetOptions {
-  filterUnvalidateFields?: boolean; // default ture
+  filterUnvalidateFields?: boolean; // default true
   parseNumber?: boolean;      // default true
   parseArray?: boolean;       // default true
   [name: string]: any         // for user defined rule 

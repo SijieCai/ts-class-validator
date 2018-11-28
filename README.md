@@ -134,7 +134,7 @@ class OnlyIfClass {
 class CustomizeMessageClass {
   @validate(
     is.required().message('field is required!!'),
-    is.equals('some value').message('field must equals to some vlaue!!'),
+    is.equals('some value').message('field must equals to some value!!'),
     or(
       is.in([1, 2]),
       is.equals(3)
@@ -199,10 +199,10 @@ console.log(instance.getId()); // 'prefix-1'
 
 ### Validate rules
 `is` and `not` are buildin rule creator which support all [validator.js](https://github.com/chriso/validator.js) static methods(exclude sanitizer methods), in addition we add bellow methods:
-- func(customValidator: (target: any, key: string) => boolean | string): to defined customValidator logic, basiclly you are able to write anything here.
+- func(customValidator: (target: any, key: string) => boolean | string): to defined customValidator logic, basically you are able to write anything here.
 - class(TClass: new () => any, fieldsPattern?: string): similar to isClass, is to validate nested class type.
-- required(): value with `null` or `undifined` will failed here, while success in all other validate rules.
-- tribleEquals(value: any): compare target === value
+- required(): value with `null` or `undefined` will failed here, while success in all other validate rules.
+- tripleEquals(value: any): compare target === value
 - doubleEquals(value: any): compare target == value
 
 ### Create your own rule creator
@@ -256,7 +256,7 @@ function jsonParse(...rules: Rule[]) {
 ``` typescript
 
 interface ValidateGetOptions {
-  filterUnvalidateFields?: boolean; // default ture
+  filterUnvalidateFields?: boolean; // default true
   parseNumber?: boolean;      // default true
   parseArray?: boolean;       // default true
   [name: string]: any         // for user defined rule 
@@ -283,4 +283,4 @@ setErrorMessage({
 
 ## Async Support
 No async validate method support for now!
-Async validation mixed with sync ones may cuase performance issues. why? Most of the time async validation is time consuming, we normally want to success all the sync validations first, and then do the async ones; one after another, or parallelly, depends on real situation. If we design the interface to support all above scenarios, it may end up ugly. Let me know if you have better idea.
+Async validation mixed with sync ones may cause performance issues. why? Most of the time async validation is time consuming, we normally want to success all the sync validations first, and then do the async ones; one after another, or parallelly, depends on real situation. If we design the interface to support all above scenarios, it may end up ugly. Let me know if you have better idea.
