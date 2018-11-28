@@ -4,7 +4,7 @@ Declarative typescript validator with nested logic operator support.
 ## Installation
 
 ```
-npm install class-validator --save
+npm install ts-class-validator --save
 ```
 
 ## Usage
