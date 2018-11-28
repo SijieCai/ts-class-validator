@@ -179,6 +179,9 @@ class IdClass {
 class NameClass {
   @validate(is.required(), is.length(3,10))
   name: string;
+
+  @validate() // validate without rules is used to whitelisting a field for validateGet
+  whitelist: any
 }
 
 @mixins(IdClass, NameClass)
