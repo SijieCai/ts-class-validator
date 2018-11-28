@@ -43,7 +43,7 @@ class AndOrClass {
 }
 
 class OnlyIfClass {
-  @validate(is.in([1, 2, 3]).onlyIf((target) => (<any>target).value2 !== undefined))
+  @validate(is.in([1, 2, 3]).onlyIf((target) => (target as any).value2 !== undefined))
   public status: number;
   @validate(is.int())
   public value2: number;
