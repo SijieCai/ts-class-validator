@@ -1,10 +1,24 @@
 {
   "name": "ts-class-validator",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Declarative typescript validator with nested logic operator support.",
   "main": "dist/index.js",
   "scripts": {
-    "test": "jest"
+    "test": "jest",
+    "build": "tsc -d src/index.ts --declarationDir ./ --outDir dist",
+    "lint": "tslint \"src/**/*.ts\"",
+    "lint-fix": "tslint --fix \"src/**/*.ts\"",
+    "prepublish": "npm run lint && npm run build"
+  },
+  "files": [
+    "dist",
+    "src",
+    "index.d.ts"
+  ],
+  "husky": {
+    "hooks": {
+      "pre-commit": "npm run lint"
+    }
   },
   "repository": {
     "type": "git",
@@ -18,8 +32,7 @@
     "typescript",
     "reflection",
     "decorator",
-    "metadata",
-    "security"
+    "metadata"
   ],
   "author": "SijieCai",
   "email": "sijie.cai@qq.com",
@@ -30,13 +43,15 @@
   "homepage": "https://github.com/sijiecai/ts-class-validator#readme",
   "dependencies": {
     "reflect-metadata": "^0.1.12",
-    "validator": "^10.8.0"
+    "validator": "^10.8.0",
+    "@types/validator": "^9.4.2"
   },
   "devDependencies": {
     "@types/jest": "^23.3.9",
-    "@types/validator": "^9.4.2",
+    "husky": "^1.2.0",
     "jest": "^23.6.0",
     "ts-jest": "^23.10.4",
+    "tslint": "^5.11.0",
     "typescript": "^3.1.6"
   }
 }

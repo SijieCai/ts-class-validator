@@ -144,6 +144,27 @@ class CustomizeMessageClass {
 }
 ```
 
+### Extends validation class
+
+``` typescript 
+
+class IdClass {
+  @validate(is.required(), is.int())
+  id: number;
+
+  getId() {return 'prefix-' + this.id ; }
+}
+ 
+class ExtendClass extends IdClass {
+  name: string; 
+}
+
+let instance = validateGet(MixinClass, {id: 1, name: 'name'}).instance;
+console.log(instance.getId()); // 'prefix-1'
+
+```
+
+
 ### Mixin validation class
 
 ``` typescript 

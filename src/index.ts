@@ -1,44 +1,45 @@
-import 'reflect-metadata';
-import * as Validator from 'validator';
+import "reflect-metadata";
+import * as Validator from "validator";
 
-const METADATA_KEY = 'validate';
+const METADATA_KEY = "validate";
 
-type RuleValidate = (target: object, key: string) => boolean | string;
-type RuleMessage = string | ((target: object, key: string) => string);
-type RuleParser = (value: any, options: ValidateGetOptions) => any;
-interface ValidateGetOptions {
+export type RuleValidate = (target: object, key: string) => boolean | string;
+export type RuleMessage = string | ((target: object, key: string) => string);
+export type RuleParser = (value: any, options: ValidateGetOptions) => any;
+export interface ValidateGetOptions {
   filterUnvalidateFields?: boolean;
   parseNumber?: boolean;
   parseArray?: boolean;
-  [name: string]: any
+  [name: string]: any;
 }
 
 const defaultValidateGetOptions: ValidateGetOptions = { filterUnvalidateFields: true, parseArray: true, parseNumber: true };
 
 function intParser(value: any, options: ValidateGetOptions) {
-  if (options.parseNumber) return parseInt(value);
+  if (options.parseNumber) {
+    return parseInt(value, 10);
+  }
   return value;
 }
 
 function floatParser(value: any, options: ValidateGetOptions) {
-  if (options.parseNumber) return parseFloat(value);
+  if (options.parseNumber) { return parseFloat(value); }
   return value;
 }
-
 
 export class Rule {
   private _validate: RuleValidate;
   private _onlyIf: RuleValidate;
   private _message: RuleMessage;
-  private _parser: RuleParser;
+  private _parser: RuleParser = null;
 
   constructor(
     validate: RuleValidate,
     message?: RuleMessage,
-    parser?: RuleParser
+    parser?: RuleParser,
   ) {
-    if (typeof validate !== 'function') {
-      throw new Error('validate must be function type')
+    if (typeof validate !== "function") {
+      throw new Error("validate must be function type");
     }
 
     this._validate = validate;
@@ -47,8 +48,8 @@ export class Rule {
   }
 
   // Validate value with current rule, ctx normally is the class instance
-  validate(target: object, key: string): boolean | string {
-    let rest = Array.prototype.slice.call(arguments, 2);
+  public validate(target: object, key: string): boolean | string {
+    const rest = Array.prototype.slice.call(arguments, 2);
     if (this._onlyIf && !this._onlyIf(target, key)) {
       return true;
     }
@@ -59,745 +60,762 @@ export class Rule {
     }
     return result;
   }
-  private getMessage(target: object, key: string): string {
-    if (typeof (this._message) === 'function') {
-      return this._message(target, key);
-    }
-    return this._message;
-  }
-  message(message: RuleMessage): Rule {
+  public message(message: RuleMessage): Rule {
     this._message = message;
     return this;
   }
-  onlyIf(condition: RuleValidate): Rule {
-    if (condition && typeof condition !== 'function') {
-      throw new Error('condition must be function type')
+  public onlyIf(condition: RuleValidate): Rule {
+    if (condition && typeof condition !== "function") {
+      throw new Error("condition must be function type");
     }
     this._onlyIf = condition;
     return this;
   }
+  private getMessage(target: object, key: string): string {
+    if (typeof (this._message) === "function") {
+      return this._message(target, key);
+    }
+    return this._message;
+  }
 }
 
-class RuleCreator {
+export class RuleCreator {
   constructor(private isNot: boolean = false) { }
-  private proxyCallValidator(validatorMethod: keyof ValidatorJS.ValidatorStatic, ...rest: any[]) {
-    let isNot = this.isNot;
-    return function (target: object, key: string) {
-      let v = target[key];
-      if (v === undefined || v === null)
-        return true;
-
-      if (typeof (v) === 'number') v = v.toString();
-      if (typeof (v) === 'string') {
-        let r = (Validator[validatorMethod] as any)(v, ...rest);
-        return (isNot ? !r : r);
-      }
-      return false;
-    }
-  }
-
-  private proxyCall(f: (target: object, key: string) => boolean | string) {
-    let isNot = this.isNot;
-    return function (target: object, key: string) {
-      let r = f(target, key);
-      return (isNot ? !r : r);
-    }
-  }
-
-  private proxyGetLocaleMessage(method: string, ...rest: any[]) {
-    let isNot = this.isNot;
-    return function (target: object, key: string) {
-      return LocaleErrorMessages[method][isNot ? 'not' : 'is'](target, key, rest);
-    }
-  }
 
   // check if the string contains the seed.
-  contains(seed: string): Rule {
+  public contains(seed: string): Rule {
     return new Rule(
-      this.proxyCallValidator('contains', seed),
-      this.proxyGetLocaleMessage('contains', seed)
+      this.proxyCallValidator("contains", seed),
+      this.proxyGetLocaleMessage("contains", seed),
     );
   }
 
   // check if the string is a date that's after the specified date (true means after now).
-  after(date?: string): Rule {
+  public after(date?: string): Rule {
     return new Rule(
-      this.proxyCallValidator('isAfter', date),
-      this.proxyGetLocaleMessage('after', date)
+      this.proxyCallValidator("isAfter", date),
+      this.proxyGetLocaleMessage("after", date),
     );
   }
 
-  alpha(locale?: ValidatorJS.AlphaLocale): Rule {
+  public alpha(locale?: ValidatorJS.AlphaLocale): Rule {
     return new Rule(
-      this.proxyCallValidator('isAlpha', locale),
-      this.proxyGetLocaleMessage('alpha', locale)
+      this.proxyCallValidator("isAlpha", locale),
+      this.proxyGetLocaleMessage("alpha", locale),
     );
   }
 
-  alphanumeric(locale?: ValidatorJS.AlphaLocale): Rule {
+  public alphanumeric(locale?: ValidatorJS.AlphaLocale): Rule {
     return new Rule(
-      this.proxyCallValidator('isAlphanumeric', locale),
-      this.proxyGetLocaleMessage('alphanumeric', locale)
+      this.proxyCallValidator("isAlphanumeric", locale),
+      this.proxyGetLocaleMessage("alphanumeric", locale),
     );
   }
-  ascii(): Rule {
+  public ascii(): Rule {
     return new Rule(
-      this.proxyCallValidator('isAscii'),
-      this.proxyGetLocaleMessage('ascii')
+      this.proxyCallValidator("isAscii"),
+      this.proxyGetLocaleMessage("ascii"),
     );
   }
-  base64(): Rule {
+  public base64(): Rule {
     return new Rule(
-      this.proxyCallValidator('isBase64'),
-      this.proxyGetLocaleMessage('base64')
+      this.proxyCallValidator("isBase64"),
+      this.proxyGetLocaleMessage("base64"),
     );
   }
-  before(date?: string): Rule {
+  public before(date?: string): Rule {
     return new Rule(
-      this.proxyCallValidator('isBefore', date),
-      this.proxyGetLocaleMessage('before', date)
+      this.proxyCallValidator("isBefore", date),
+      this.proxyGetLocaleMessage("before", date),
     );
   }
-  byteLength(options: ValidatorJS.IsByteLengthOptions): Rule;
-  byteLength(min: number, max?: number): Rule;
-  byteLength(min: any, max?: any): Rule {
+  public byteLength(options: ValidatorJS.IsByteLengthOptions): Rule;
+  public byteLength(min: number, max?: number): Rule;
+  public byteLength(min: any, max?: any): Rule {
     return new Rule(
-      this.proxyCallValidator('isByteLength', min, max),
-      this.proxyGetLocaleMessage('byteLength', min, max)
+      this.proxyCallValidator("isByteLength", min, max),
+      this.proxyGetLocaleMessage("byteLength", min, max),
     );
   }
-  creditCard(): Rule {
+  public creditCard(): Rule {
     return new Rule(
-      this.proxyCallValidator('isCreditCard'),
-      this.proxyGetLocaleMessage('creditCard')
+      this.proxyCallValidator("isCreditCard"),
+      this.proxyGetLocaleMessage("creditCard"),
     );
   }
-  currency(options?: ValidatorJS.IsCurrencyOptions): Rule {
+  public currency(options?: ValidatorJS.IsCurrencyOptions): Rule {
     return new Rule(
-      this.proxyCallValidator('isCurrency', options),
-      this.proxyGetLocaleMessage('currency', options)
+      this.proxyCallValidator("isCurrency", options),
+      this.proxyGetLocaleMessage("currency", options),
     );
   }
-  dataURI(): Rule {
+  public dataURI(): Rule {
     return new Rule(
-      this.proxyCallValidator('isDataURI'),
-      this.proxyGetLocaleMessage('dataURI')
+      this.proxyCallValidator("isDataURI"),
+      this.proxyGetLocaleMessage("dataURI"),
     );
   }
-  email(options?: ValidatorJS.IsEmailOptions): Rule {
+  public email(options?: ValidatorJS.IsEmailOptions): Rule {
     return new Rule(
-      this.proxyCallValidator('isEmail', options),
-      this.proxyGetLocaleMessage('email', options)
+      this.proxyCallValidator("isEmail", options),
+      this.proxyGetLocaleMessage("email", options),
     );
   }
-  FQDN(options?: ValidatorJS.IsFQDNOptions): Rule {
+  public FQDN(options?: ValidatorJS.IsFQDNOptions): Rule {
     return new Rule(
-      this.proxyCallValidator('isFQDN', options),
-      this.proxyGetLocaleMessage('FQDN', options)
+      this.proxyCallValidator("isFQDN", options),
+      this.proxyGetLocaleMessage("FQDN", options),
     );
   }
-  fullWidth(): Rule {
+  public fullWidth(): Rule {
     return new Rule(
-      this.proxyCallValidator('isFullWidth'),
-      this.proxyGetLocaleMessage('fullWidth')
+      this.proxyCallValidator("isFullWidth"),
+      this.proxyGetLocaleMessage("fullWidth"),
     );
   }
-  halfWidth(): Rule {
+  public halfWidth(): Rule {
     return new Rule(
-      this.proxyCallValidator('isHalfWidth'),
-      this.proxyGetLocaleMessage('halfWidth')
+      this.proxyCallValidator("isHalfWidth"),
+      this.proxyGetLocaleMessage("halfWidth"),
     );
   }
-  hash(algorithm: ValidatorJS.HashAlgorithm): Rule {
+  public hash(algorithm: ValidatorJS.HashAlgorithm): Rule {
     return new Rule(
-      this.proxyCallValidator('isHash', algorithm),
-      this.proxyGetLocaleMessage('hash', algorithm)
+      this.proxyCallValidator("isHash", algorithm),
+      this.proxyGetLocaleMessage("hash", algorithm),
     );
   }
-  hexColor(): Rule {
+  public hexColor(): Rule {
     return new Rule(
-      this.proxyCallValidator('isHexColor'),
-      this.proxyGetLocaleMessage('hexColor')
+      this.proxyCallValidator("isHexColor"),
+      this.proxyGetLocaleMessage("hexColor"),
     );
   }
-  hexadecimal(): Rule {
+  public hexadecimal(): Rule {
     return new Rule(
-      this.proxyCallValidator('isHexadecimal'),
-      this.proxyGetLocaleMessage('hexadecimal')
+      this.proxyCallValidator("isHexadecimal"),
+      this.proxyGetLocaleMessage("hexadecimal"),
     );
   }
-  IP(version?: number): Rule {
+  public IP(version?: number): Rule {
     return new Rule(
-      this.proxyCallValidator('isIP', version),
-      this.proxyGetLocaleMessage('IP', version)
+      this.proxyCallValidator("isIP", version),
+      this.proxyGetLocaleMessage("IP", version),
     );
   }
-  ISBN(version?: number): Rule {
+  public ISBN(version?: number): Rule {
     return new Rule(
-      this.proxyCallValidator('isISBN', version),
-      this.proxyGetLocaleMessage('ISBN', version)
+      this.proxyCallValidator("isISBN", version),
+      this.proxyGetLocaleMessage("ISBN", version),
     );
   }
-  ISSN(options?: ValidatorJS.IsISSNOptions): Rule {
+  public ISSN(options?: ValidatorJS.IsISSNOptions): Rule {
     return new Rule(
-      this.proxyCallValidator('isISSN', options),
-      this.proxyGetLocaleMessage('ISSN', options)
+      this.proxyCallValidator("isISSN", options),
+      this.proxyGetLocaleMessage("ISSN", options),
     );
   }
-  ISIN(): Rule {
+  public ISIN(): Rule {
     return new Rule(
-      this.proxyCallValidator('isISIN'),
-      this.proxyGetLocaleMessage('ISIN')
+      this.proxyCallValidator("isISIN"),
+      this.proxyGetLocaleMessage("ISIN"),
     );
   }
-  ISO8601(): Rule {
+  public ISO8601(): Rule {
     return new Rule(
-      this.proxyCallValidator('isISO8601'),
-      this.proxyGetLocaleMessage('ISO8601')
+      this.proxyCallValidator("isISO8601"),
+      this.proxyGetLocaleMessage("ISO8601"),
     );
   }
-  ISO31661Alpha2(): Rule {
+  public ISO31661Alpha2(): Rule {
     return new Rule(
-      this.proxyCallValidator('isISO31661Alpha2'),
-      this.proxyGetLocaleMessage('ISO31661Alpha2')
+      this.proxyCallValidator("isISO31661Alpha2"),
+      this.proxyGetLocaleMessage("ISO31661Alpha2"),
     );
   }
-  ISRC(): Rule {
+  public ISRC(): Rule {
     return new Rule(
-      this.proxyCallValidator('isISRC'),
-      this.proxyGetLocaleMessage('ISRC')
+      this.proxyCallValidator("isISRC"),
+      this.proxyGetLocaleMessage("ISRC"),
     );
   }
-  JSON(): Rule {
+  public JSON(): Rule {
     return new Rule(
-      this.proxyCallValidator('isJSON'),
-      this.proxyGetLocaleMessage('JSON')
+      this.proxyCallValidator("isJSON"),
+      this.proxyGetLocaleMessage("JSON"),
     );
   }
-  latLong(): Rule {
+  public latLong(): Rule {
     return new Rule(
-      this.proxyCallValidator('isLatLong'),
-      this.proxyGetLocaleMessage('latLong')
+      this.proxyCallValidator("isLatLong"),
+      this.proxyGetLocaleMessage("latLong"),
     );
   }
-  length(options: ValidatorJS.IsLengthOptions): Rule;
-  length(min: number, max?: number): Rule;
-  length(min: any, max?: any): Rule {
+  public length(options: ValidatorJS.IsLengthOptions): Rule;
+  public length(min: number, max?: number): Rule;
+  public length(min: any, max?: any): Rule {
     return new Rule(
-      this.proxyCallValidator('isLength', min, max),
-      this.proxyGetLocaleMessage('length', min, max)
+      this.proxyCallValidator("isLength", min, max),
+      this.proxyGetLocaleMessage("length", min, max),
     );
   }
-  lowercase(): Rule {
+  public lowercase(): Rule {
     return new Rule(
-      this.proxyCallValidator('isLowercase'),
-      this.proxyGetLocaleMessage('lowercase')
+      this.proxyCallValidator("isLowercase"),
+      this.proxyGetLocaleMessage("lowercase"),
     );
   }
-  MACAddress(): Rule {
+  public MACAddress(): Rule {
     return new Rule(
-      this.proxyCallValidator('isMACAddress'),
-      this.proxyGetLocaleMessage('MACAddress')
+      this.proxyCallValidator("isMACAddress"),
+      this.proxyGetLocaleMessage("MACAddress"),
     );
   }
-  MD5(): Rule {
+  public MD5(): Rule {
     return new Rule(
-      this.proxyCallValidator('isMD5'),
-      this.proxyGetLocaleMessage('MD5')
+      this.proxyCallValidator("isMD5"),
+      this.proxyGetLocaleMessage("MD5"),
     );
   }
-  mimeType(): Rule {
+  public mimeType(): Rule {
     return new Rule(
-      this.proxyCallValidator('isMimeType'),
-      this.proxyGetLocaleMessage('mimeType')
+      this.proxyCallValidator("isMimeType"),
+      this.proxyGetLocaleMessage("mimeType"),
     );
   }
-  mobilePhone(locale: ValidatorJS.MobilePhoneLocale, options?: ValidatorJS.IsMobilePhoneOptions): Rule {
+  public mobilePhone(locale: ValidatorJS.MobilePhoneLocale, options?: ValidatorJS.IsMobilePhoneOptions): Rule {
     return new Rule(
-      this.proxyCallValidator('isMobilePhone', locale, options),
-      this.proxyGetLocaleMessage('mobilePhone', locale, options)
+      this.proxyCallValidator("isMobilePhone", locale, options),
+      this.proxyGetLocaleMessage("mobilePhone", locale, options),
     );
   }
-  mongoId(): Rule {
+  public mongoId(): Rule {
     return new Rule(
-      this.proxyCallValidator('isMongoId'),
-      this.proxyGetLocaleMessage('mongoId')
+      this.proxyCallValidator("isMongoId"),
+      this.proxyGetLocaleMessage("mongoId"),
     );
   }
-  multibyte(): Rule {
+  public multibyte(): Rule {
     return new Rule(
-      this.proxyCallValidator('isMultibyte'),
-      this.proxyGetLocaleMessage('multibyte')
+      this.proxyCallValidator("isMultibyte"),
+      this.proxyGetLocaleMessage("multibyte"),
     );
   }
-  numeric(options?: ValidatorJS.IsNumericOptions): Rule {
+  public numeric(options?: ValidatorJS.IsNumericOptions): Rule {
     return new Rule(
-      this.proxyCallValidator('isNumeric', options),
-      this.proxyGetLocaleMessage('numeric', options)
+      this.proxyCallValidator("isNumeric", options),
+      this.proxyGetLocaleMessage("numeric", options),
     );
   }
-  postalCode(locale: ValidatorJS.PostalCodeLocale): Rule {
+  public postalCode(locale: ValidatorJS.PostalCodeLocale): Rule {
     return new Rule(
-      this.proxyCallValidator('isPostalCode', locale),
-      this.proxyGetLocaleMessage('postalCode', locale)
+      this.proxyCallValidator("isPostalCode", locale),
+      this.proxyGetLocaleMessage("postalCode", locale),
     );
   }
-  surrogatePair(): Rule {
+  public surrogatePair(): Rule {
     return new Rule(
-      this.proxyCallValidator('isSurrogatePair'),
-      this.proxyGetLocaleMessage('surrogatePair')
+      this.proxyCallValidator("isSurrogatePair"),
+      this.proxyGetLocaleMessage("surrogatePair"),
     );
   }
-  URL(options?: ValidatorJS.IsURLOptions): Rule {
+  public URL(options?: ValidatorJS.IsURLOptions): Rule {
     return new Rule(
-      this.proxyCallValidator('isURL', options),
-      this.proxyGetLocaleMessage('URL', options)
+      this.proxyCallValidator("isURL", options),
+      this.proxyGetLocaleMessage("URL", options),
     );
   }
-  UUID(version?: 3 | 4 | 5 | "3" | "4" | "5" | "all"): Rule {
+  public UUID(version?: 3 | 4 | 5 | "3" | "4" | "5" | "all"): Rule {
     return new Rule(
-      this.proxyCallValidator('isUUID', version),
-      this.proxyGetLocaleMessage('UUID', version)
+      this.proxyCallValidator("isUUID", version),
+      this.proxyGetLocaleMessage("UUID", version),
     );
   }
-  uppercase(): Rule {
+  public uppercase(): Rule {
     return new Rule(
-      this.proxyCallValidator('isUppercase'),
-      this.proxyGetLocaleMessage('uppercase')
+      this.proxyCallValidator("isUppercase"),
+      this.proxyGetLocaleMessage("uppercase"),
     );
   }
-  variableWidth(): Rule {
+  public variableWidth(): Rule {
     return new Rule(
-      this.proxyCallValidator('isVariableWidth'),
-      this.proxyGetLocaleMessage('variableWidth')
+      this.proxyCallValidator("isVariableWidth"),
+      this.proxyGetLocaleMessage("variableWidth"),
     );
   }
-  whitelisted(chars: string | string[]): Rule {
+  public whitelisted(chars: string | string[]): Rule {
     return new Rule(
-      this.proxyCallValidator('isWhitelisted', chars),
-      this.proxyGetLocaleMessage('whitelisted', chars)
+      this.proxyCallValidator("isWhitelisted", chars),
+      this.proxyGetLocaleMessage("whitelisted", chars),
     );
   }
-  matches(pattern: string | RegExp, modifiers?: string): Rule {
+  public matches(pattern: string | RegExp, modifiers?: string): Rule {
     return new Rule(
-      this.proxyCallValidator('matches', pattern, modifiers),
-      this.proxyGetLocaleMessage('matches', pattern, modifiers)
+      this.proxyCallValidator("matches", pattern, modifiers),
+      this.proxyGetLocaleMessage("matches", pattern, modifiers),
     );
   }
 
   // check if the string represents a decimal number, such as 0.1, .3, 1.1, 1.00003, 4.0, etc.
-  decimal(options?: ValidatorJS.IsDecimalOptions): Rule {
+  public decimal(options?: ValidatorJS.IsDecimalOptions): Rule {
     return new Rule(
-      this.proxyCallValidator('isDecimal', options),
-      this.proxyGetLocaleMessage('decimal', options),
-      floatParser
+      this.proxyCallValidator("isDecimal", options),
+      this.proxyGetLocaleMessage("decimal", options),
+      floatParser,
     );
   }
 
   // check if the string is a number that's divisible by another.
-  divisibleBy(number: number): Rule {
+  public divisibleBy(number: number): Rule {
     return new Rule(
-      this.proxyCallValidator('isDivisibleBy', number),
-      this.proxyGetLocaleMessage('divisibleBy', number),
-      floatParser
+      this.proxyCallValidator("isDivisibleBy", number),
+      this.proxyGetLocaleMessage("divisibleBy", number),
+      floatParser,
     );
   }
 
-
   // check if the string is a float.
-  float(options?: ValidatorJS.IsFloatOptions): Rule {
+  public float(options?: ValidatorJS.IsFloatOptions): Rule {
     return new Rule(
-      this.proxyCallValidator('isFloat', options),
-      this.proxyGetLocaleMessage('float', options),
-      floatParser
+      this.proxyCallValidator("isFloat", options),
+      this.proxyGetLocaleMessage("float", options),
+      floatParser,
     );
   }
 
   // check if the string is an integer.
-  int(options?: ValidatorJS.IsIntOptions): Rule {
+  public int(options?: ValidatorJS.IsIntOptions): Rule {
     return new Rule(
-      this.proxyCallValidator('isInt', options),
-      this.proxyGetLocaleMessage('int', options),
-      intParser
+      this.proxyCallValidator("isInt", options),
+      this.proxyGetLocaleMessage("int", options),
+      intParser,
     );
   }
 
   // check if the string is a valid port number.
-  port(): Rule {
+  public port(): Rule {
     return new Rule(
-      this.proxyCallValidator('isPort'),
-      this.proxyGetLocaleMessage('port')
+      this.proxyCallValidator("isPort"),
+      this.proxyGetLocaleMessage("port"),
     );
   }
 
   // check if the string matches the comparison.
-  equals(comparison: any): Rule {
+  public equals(comparison: any): Rule {
     return new Rule(
-      this.proxyCallValidator('equals', comparison),
-      this.proxyGetLocaleMessage('equals', comparison)
+      this.proxyCallValidator("equals", comparison),
+      this.proxyGetLocaleMessage("equals", comparison),
     );
   }
 
   // ===
-  tribleEquals(comparison: any): Rule {
+  public tribleEquals(comparison: any): Rule {
     return new Rule(
       this.proxyCall((target, key) => target[key] === comparison),
-      this.proxyGetLocaleMessage('tribleEquals', comparison)
+      this.proxyGetLocaleMessage("tribleEquals", comparison),
     );
   }
 
   // ==
-  doubleEquals(comparison: any): Rule {
+  public doubleEquals(comparison: any): Rule {
     return new Rule(
       this.proxyCall((target, key) => target[key] == comparison),
-      this.proxyGetLocaleMessage('doubleEquals', comparison)
+      this.proxyGetLocaleMessage("doubleEquals", comparison),
     );
   }
 
   // check if the string has a length of zero or undefined.
-  empty(): Rule {
+  public empty(): Rule {
     return new Rule(
-      this.proxyCallValidator('isEmpty'),
-      this.proxyGetLocaleMessage('empty')
+      this.proxyCallValidator("isEmpty"),
+      this.proxyGetLocaleMessage("empty"),
     );
   }
 
   // check if value is not undefined
-  required(): Rule {
+  public required(): Rule {
     return new Rule(
       this.proxyCall((target, key) => (target[key] !== undefined && target[key] !== null)),
-      this.proxyGetLocaleMessage('required')
+      this.proxyGetLocaleMessage("required"),
     );
   }
 
   // check if the string is in a array of allowed values.
-  in(values: any[]): Rule {
+  public in(values: any[]): Rule {
     return new Rule(
-      this.proxyCallValidator('isIn', values),
-      this.proxyGetLocaleMessage('in', values)
+      this.proxyCallValidator("isIn", values),
+      this.proxyGetLocaleMessage("in", values),
     );
   }
-  func(f: (target: any, key: string) => boolean | string): Rule {
+  public func(f: (target: any, key: string) => boolean | string): Rule {
     return new Rule(
       this.proxyCall((target, key) => f(target, key)),
-      this.proxyGetLocaleMessage('func')
+      this.proxyGetLocaleMessage("func"),
     );
   }
-  class(TClass: new () => any): Rule {
+  public class(TClass: new () => any): Rule {
     return new Rule(
       this.proxyCall((target, key, ...rest: any[]) => (isClass as any)(TClass, target[key], ...rest)),
-      this.proxyGetLocaleMessage('class', TClass),
-      (value: any, options: ValidateGetOptions) => validateGet(TClass, value, options).instance
+      this.proxyGetLocaleMessage("class", TClass),
+      (value: any, options: ValidateGetOptions) => validateGet(TClass, value, options).instance,
     );
+  }
+  private proxyCallValidator = (validatorMethod: keyof ValidatorJS.ValidatorStatic, ...rest: any[]) => {
+    const isNot = this.isNot;
+    return function(target: object, key: string) {
+      let v = target[key];
+      if (v === undefined || v === null) {
+        return true;
+      }
+
+      if (typeof (v) === "number") { v = v.toString(); }
+      if (typeof (v) === "string") {
+        const r = (Validator[validatorMethod] as any)(v, ...rest);
+        return (isNot ? !r : r);
+      }
+      return false;
+    };
+  }
+
+  private proxyCall = (f: (target: object, key: string) => boolean | string) => {
+    const isNot = this.isNot;
+    return function(target: object, key: string) {
+      const r = f(target, key);
+      return (isNot ? !r : r);
+    };
+  }
+
+  private proxyGetLocaleMessage = (method: string, ...rest: any[]) => {
+    const isNot = this.isNot;
+    return function(target: object, key: string) {
+      return LocaleErrorMessages[method][isNot ? "not" : "is"](target, key, rest);
+    };
   }
 }
 
 const LocaleErrorMessages = {
   contains: {
-    is: (target: object, key: string, ...rest: any[]) => `${target[key]} contains ${rest.join(', ')}`,
-    not: (target: object, key: string, ...rest: any[]) => `${target[key]} not contains ${rest.join(', ')}`
+    is: (target: object, key: string, ...rest: any[]) => `${target[key]} contains ${rest.join(", ")}`,
+    not: (target: object, key: string, ...rest: any[]) => `${target[key]} not contains ${rest.join(", ")}`,
   },
   after: {
-    is: (target: object, key: string, ...rest: any[]) => `${target[key]} date is after date ${rest.join(', ')}`,
-    not: (target: object, key: string, ...rest: any[]) => `${target[key]} date is not after date ${rest.join(', ')}`
+    is: (target: object, key: string, ...rest: any[]) => `${target[key]} date is after date ${rest.join(", ")}`,
+    not: (target: object, key: string, ...rest: any[]) => `${target[key]} date is not after date ${rest.join(", ")}`,
   },
   alpha: {
     is: (target: object, key: string, ...rest: any[]) => `${target[key]} is alpha`,
-    not: (target: object, key: string, ...rest: any[]) => `${target[key]} is not alpha`
+    not: (target: object, key: string, ...rest: any[]) => `${target[key]} is not alpha`,
   },
   alphanumeric: {
     is: (target: object, key: string, ...rest: any[]) => `${target[key]} is alphanumeric`,
-    not: (target: object, key: string, ...rest: any[]) => `${target[key]} is not alphanumeric`
+    not: (target: object, key: string, ...rest: any[]) => `${target[key]} is not alphanumeric`,
   },
   ascii: {
     is: (target: object, key: string, ...rest: any[]) => `${target[key]} is ascii`,
-    not: (target: object, key: string, ...rest: any[]) => `${target[key]} is not ascii`
+    not: (target: object, key: string, ...rest: any[]) => `${target[key]} is not ascii`,
   },
   base64: {
     is: (target: object, key: string, ...rest: any[]) => `${target[key]} is base64`,
-    not: (target: object, key: string, ...rest: any[]) => `${target[key]} is not base64`
+    not: (target: object, key: string, ...rest: any[]) => `${target[key]} is not base64`,
   },
   before: {
-    is: (target: object, key: string, ...rest: any[]) => `${target[key]} date is before date ${rest.join(', ')}`,
-    not: (target: object, key: string, ...rest: any[]) => `${target[key]} date is before date ${rest.join(', ')}`
+    is: (target: object, key: string, ...rest: any[]) => `${target[key]} date is before date ${rest.join(", ")}`,
+    not: (target: object, key: string, ...rest: any[]) => `${target[key]} date is before date ${rest.join(", ")}`,
   },
   byteLength: {
-    is: (target: object, key: string, ...rest: any[]) => `${target[key]} byte length is ${rest.join(' ')}`,
-    not: (target: object, key: string, ...rest: any[]) => `${target[key]} byte length is ${rest.join(' ')}`
+    is: (target: object, key: string, ...rest: any[]) => `${target[key]} byte length is ${rest.join(" ")}`,
+    not: (target: object, key: string, ...rest: any[]) => `${target[key]} byte length is ${rest.join(" ")}`,
   },
   creditCard: {
     is: (target: object, key: string, ...rest: any[]) => `${target[key]} is credit card`,
-    not: (target: object, key: string, ...rest: any[]) => `${target[key]} is not credit card`
+    not: (target: object, key: string, ...rest: any[]) => `${target[key]} is not credit card`,
   },
   currency: {
     is: (target: object, key: string, ...rest: any[]) => `${target[key]} is currency`,
-    not: (target: object, key: string, ...rest: any[]) => `${target[key]} is not currency`
+    not: (target: object, key: string, ...rest: any[]) => `${target[key]} is not currency`,
   },
   dataURI: {
     is: (target: object, key: string, ...rest: any[]) => `${target[key]} is date URI`,
-    not: (target: object, key: string, ...rest: any[]) => `${target[key]} is not date URI`
+    not: (target: object, key: string, ...rest: any[]) => `${target[key]} is not date URI`,
   },
   email: {
     is: (target: object, key: string, ...rest: any[]) => `${target[key]} is email`,
-    not: (target: object, key: string, ...rest: any[]) => `${target[key]} is not email`
+    not: (target: object, key: string, ...rest: any[]) => `${target[key]} is not email`,
   },
   FQDN: {
     is: (target: object, key: string, ...rest: any[]) => `${target[key]} is FQDN`,
-    not: (target: object, key: string, ...rest: any[]) => `${target[key]} is not FQDN`
+    not: (target: object, key: string, ...rest: any[]) => `${target[key]} is not FQDN`,
   },
   fullWidth: {
     is: (target: object, key: string, ...rest: any[]) => `${target[key]} is full width`,
-    not: (target: object, key: string, ...rest: any[]) => `${target[key]} is not full width`
+    not: (target: object, key: string, ...rest: any[]) => `${target[key]} is not full width`,
   },
   halfWidth: {
     is: (target: object, key: string, ...rest: any[]) => `${target[key]} is half width`,
-    not: (target: object, key: string, ...rest: any[]) => `${target[key]} is not half width`
+    not: (target: object, key: string, ...rest: any[]) => `${target[key]} is not half width`,
   },
   hash: {
     is: (target: object, key: string, ...rest: any[]) => `${target[key]} is hash`,
-    not: (target: object, key: string, ...rest: any[]) => `${target[key]} is not hash`
+    not: (target: object, key: string, ...rest: any[]) => `${target[key]} is not hash`,
   },
   hexColor: {
     is: (target: object, key: string, ...rest: any[]) => `${target[key]} is hex color`,
-    not: (target: object, key: string, ...rest: any[]) => `${target[key]} is not hex color`
+    not: (target: object, key: string, ...rest: any[]) => `${target[key]} is not hex color`,
   },
   hexadecimal: {
     is: (target: object, key: string, ...rest: any[]) => `${target[key]} is hex decimal`,
-    not: (target: object, key: string, ...rest: any[]) => `${target[key]} is not hex decimal`
+    not: (target: object, key: string, ...rest: any[]) => `${target[key]} is not hex decimal`,
   },
   IP: {
     is: (target: object, key: string, ...rest: any[]) => `${target[key]} is IP`,
-    not: (target: object, key: string, ...rest: any[]) => `${target[key]} is not IP`
+    not: (target: object, key: string, ...rest: any[]) => `${target[key]} is not IP`,
   },
   ISBN: {
     is: (target: object, key: string, ...rest: any[]) => `${target[key]} is ISBN`,
-    not: (target: object, key: string, ...rest: any[]) => `${target[key]} is not ISBN`
+    not: (target: object, key: string, ...rest: any[]) => `${target[key]} is not ISBN`,
   },
   ISSN: {
     is: (target: object, key: string, ...rest: any[]) => `${target[key]} is ISSN`,
-    not: (target: object, key: string, ...rest: any[]) => `${target[key]} is not ISSN`
+    not: (target: object, key: string, ...rest: any[]) => `${target[key]} is not ISSN`,
   },
   ISIN: {
     is: (target: object, key: string, ...rest: any[]) => `${target[key]} is ISIN`,
-    not: (target: object, key: string, ...rest: any[]) => `${target[key]} is not ISIN`
+    not: (target: object, key: string, ...rest: any[]) => `${target[key]} is not ISIN`,
   },
   ISO8601: {
     is: (target: object, key: string, ...rest: any[]) => `${target[key]} is ISO8601`,
-    not: (target: object, key: string, ...rest: any[]) => `${target[key]} is not ISO8601`
+    not: (target: object, key: string, ...rest: any[]) => `${target[key]} is not ISO8601`,
   },
   ISO31661Alpha2: {
     is: (target: object, key: string, ...rest: any[]) => `${target[key]} is after ISO31661Alpha2`,
-    not: (target: object, key: string, ...rest: any[]) => `${target[key]} is after not ISO31661Alpha2`
+    not: (target: object, key: string, ...rest: any[]) => `${target[key]} is after not ISO31661Alpha2`,
   },
   ISRC: {
-    is: (target: object, key: string, ...rest: any[]) => `${target[key]} is after ${rest.join(', ')}`,
-    not: (target: object, key: string, ...rest: any[]) => `${target[key]} is after ${rest.join(', ')}`
+    is: (target: object, key: string, ...rest: any[]) => `${target[key]} is after ${rest.join(", ")}`,
+    not: (target: object, key: string, ...rest: any[]) => `${target[key]} is after ${rest.join(", ")}`,
   },
   JSON: {
     is: (target: object, key: string, ...rest: any[]) => `${target[key]} is JSON`,
-    not: (target: object, key: string, ...rest: any[]) => `${target[key]} is not JSON`
+    not: (target: object, key: string, ...rest: any[]) => `${target[key]} is not JSON`,
   },
   latLong: {
     is: (target: object, key: string, ...rest: any[]) => `${target[key]} is latLong`,
-    not: (target: object, key: string, ...rest: any[]) => `${target[key]} is not latLong`
+    not: (target: object, key: string, ...rest: any[]) => `${target[key]} is not latLong`,
   },
   length: {
-    is: (target: object, key: string, ...rest: any[]) => `${target[key]} is lenght of ${rest.join(', ')}`,
-    not: (target: object, key: string, ...rest: any[]) => `${target[key]} is not lenght of ${rest.join(', ')}`
+    is: (target: object, key: string, ...rest: any[]) => `${target[key]} is lenght of ${rest.join(", ")}`,
+    not: (target: object, key: string, ...rest: any[]) => `${target[key]} is not lenght of ${rest.join(", ")}`,
   },
   lowercase: {
     is: (target: object, key: string, ...rest: any[]) => `${target[key]} is lowercase`,
-    not: (target: object, key: string, ...rest: any[]) => `${target[key]} is not lowercase`
+    not: (target: object, key: string, ...rest: any[]) => `${target[key]} is not lowercase`,
   },
   MACAddress: {
     is: (target: object, key: string, ...rest: any[]) => `${target[key]} is MAC address`,
-    not: (target: object, key: string, ...rest: any[]) => `${target[key]} is not MAC address`
+    not: (target: object, key: string, ...rest: any[]) => `${target[key]} is not MAC address`,
   },
   MD5: {
     is: (target: object, key: string, ...rest: any[]) => `${target[key]} is MD5`,
-    not: (target: object, key: string, ...rest: any[]) => `${target[key]} is not MD5`
+    not: (target: object, key: string, ...rest: any[]) => `${target[key]} is not MD5`,
   },
   mimeType: {
     is: (target: object, key: string, ...rest: any[]) => `${target[key]} is minetype`,
-    not: (target: object, key: string, ...rest: any[]) => `${target[key]} is not minetype`
+    not: (target: object, key: string, ...rest: any[]) => `${target[key]} is not minetype`,
   },
   mobilePhone: {
     is: (target: object, key: string, ...rest: any[]) => `${target[key]} is mobile phone`,
-    not: (target: object, key: string, ...rest: any[]) => `${target[key]} is not mobile phone`
+    not: (target: object, key: string, ...rest: any[]) => `${target[key]} is not mobile phone`,
   },
   mongoId: {
     is: (target: object, key: string, ...rest: any[]) => `${target[key]} is mongoId`,
-    not: (target: object, key: string, ...rest: any[]) => `${target[key]} is not mongoId`
+    not: (target: object, key: string, ...rest: any[]) => `${target[key]} is not mongoId`,
   },
   multibyte: {
     is: (target: object, key: string, ...rest: any[]) => `${target[key]} is multi-byte`,
-    not: (target: object, key: string, ...rest: any[]) => `${target[key]} is not multi-byte`
+    not: (target: object, key: string, ...rest: any[]) => `${target[key]} is not multi-byte`,
   },
   numeric: {
     is: (target: object, key: string, ...rest: any[]) => `${target[key]} is numeric`,
-    not: (target: object, key: string, ...rest: any[]) => `${target[key]} is not numeric`
+    not: (target: object, key: string, ...rest: any[]) => `${target[key]} is not numeric`,
   },
   postalCode: {
     is: (target: object, key: string, ...rest: any[]) => `${target[key]} is postal code`,
-    not: (target: object, key: string, ...rest: any[]) => `${target[key]} is not postal code`
+    not: (target: object, key: string, ...rest: any[]) => `${target[key]} is not postal code`,
   },
   surrogatePair: {
     is: (target: object, key: string, ...rest: any[]) => `${target[key]} is surrogate pair`,
-    not: (target: object, key: string, ...rest: any[]) => `${target[key]} is not surrogate pair`
+    not: (target: object, key: string, ...rest: any[]) => `${target[key]} is not surrogate pair`,
   },
   URL: {
     is: (target: object, key: string, ...rest: any[]) => `${target[key]} is URL`,
-    not: (target: object, key: string, ...rest: any[]) => `${target[key]} is not URL`
+    not: (target: object, key: string, ...rest: any[]) => `${target[key]} is not URL`,
   },
   UUID: {
     is: (target: object, key: string, ...rest: any[]) => `${target[key]} is UUID`,
-    not: (target: object, key: string, ...rest: any[]) => `${target[key]} is not UUID`
+    not: (target: object, key: string, ...rest: any[]) => `${target[key]} is not UUID`,
   },
   uppercase: {
     is: (target: object, key: string, ...rest: any[]) => `${target[key]} is uppercase`,
-    not: (target: object, key: string, ...rest: any[]) => `${target[key]} is not uppercase`
+    not: (target: object, key: string, ...rest: any[]) => `${target[key]} is not uppercase`,
   },
   variableWidth: {
     is: (target: object, key: string, ...rest: any[]) => `${target[key]} is variable width`,
-    not: (target: object, key: string, ...rest: any[]) => `${target[key]} is not variable width`
+    not: (target: object, key: string, ...rest: any[]) => `${target[key]} is not variable width`,
   },
   whitelisted: {
-    is: (target: object, key: string, ...rest: any[]) => `${target[key]} characters is white listed (${rest.join('')})`,
-    not: (target: object, key: string, ...rest: any[]) => `${target[key]} characters is white listed (${rest.join('')})`
+    is: (target: object, key: string, ...rest: any[]) => `${target[key]} characters is white listed (${rest.join("")})`,
+    not: (target: object, key: string, ...rest: any[]) => `${target[key]} characters is white listed (${rest.join("")})`,
   },
   matches: {
-    is: (target: object, key: string, ...rest: any[]) => `${target[key]} matches ${rest.join('')}`,
-    not: (target: object, key: string, ...rest: any[]) => `${target[key]} not matches ${rest.join('')}`
+    is: (target: object, key: string, ...rest: any[]) => `${target[key]} matches ${rest.join("")}`,
+    not: (target: object, key: string, ...rest: any[]) => `${target[key]} not matches ${rest.join("")}`,
   },
   decimal: {
     is: (target: object, key: string, ...rest: any[]) => `${target[key]} is decimal`,
-    not: (target: object, key: string, ...rest: any[]) => `${target[key]} is not decimal`
+    not: (target: object, key: string, ...rest: any[]) => `${target[key]} is not decimal`,
   },
   divisibleBy: {
     is: (target: object, key: string, ...rest: any[]) => `${target[key]} is divisible by ${rest[0]}`,
-    not: (target: object, key: string, ...rest: any[]) => `${target[key]} is not divisible by ${rest[0]}`
+    not: (target: object, key: string, ...rest: any[]) => `${target[key]} is not divisible by ${rest[0]}`,
   },
   float: {
     is: (target: object, key: string, ...rest: any[]) => `${target[key]} is float`,
-    not: (target: object, key: string, ...rest: any[]) => `${target[key]} is not float`
+    not: (target: object, key: string, ...rest: any[]) => `${target[key]} is not float`,
   },
   int: {
     is: (target: object, key: string, ...rest: any[]) => `${target[key]} is int`,
-    not: (target: object, key: string, ...rest: any[]) => `${target[key]} is not int`
+    not: (target: object, key: string, ...rest: any[]) => `${target[key]} is not int`,
   },
   port: {
     is: (target: object, key: string, ...rest: any[]) => `${target[key]} is port`,
-    not: (target: object, key: string, ...rest: any[]) => `${target[key]} is not port`
+    not: (target: object, key: string, ...rest: any[]) => `${target[key]} is not port`,
   },
   equals: {
     is: (target: object, key: string, ...rest: any[]) => `${target[key]} equals ${rest[0]}`,
-    not: (target: object, key: string, ...rest: any[]) => `${target[key]} not equals ${rest[0]}`
+    not: (target: object, key: string, ...rest: any[]) => `${target[key]} not equals ${rest[0]}`,
   },
   doubleEquals: {
     is: (target: object, key: string, ...rest: any[]) => `${target[key]} == ${rest[0]}`,
-    not: (target: object, key: string, ...rest: any[]) => `${target[key]} != ${rest[0]}`
+    not: (target: object, key: string, ...rest: any[]) => `${target[key]} != ${rest[0]}`,
   },
   tribleEquals: {
     is: (target: object, key: string, ...rest: any[]) => `${target[key]} === ${rest[0]}`,
-    not: (target: object, key: string, ...rest: any[]) => `${target[key]} !== ${rest[0]}`
+    not: (target: object, key: string, ...rest: any[]) => `${target[key]} !== ${rest[0]}`,
   },
   empty: {
     is: (target: object, key: string, ...rest: any[]) => `${target[key]} is empty`,
-    not: (target: object, key: string, ...rest: any[]) => `${target[key]} is not empty`
+    not: (target: object, key: string, ...rest: any[]) => `${target[key]} is not empty`,
   },
   required: {
     is: (target: object, key: string, ...rest: any[]) => `${target[key]} is required`,
-    not: (target: object, key: string, ...rest: any[]) => `${target[key]} is not required`
+    not: (target: object, key: string, ...rest: any[]) => `${target[key]} is not required`,
   },
   in: {
-    is: (target: object, key: string, ...rest: any[]) => `${target[key]} is in [${rest.join(', ')}]`,
-    not: (target: object, key: string, ...rest: any[]) => `${target[key]} is not in [${rest.join(', ')}]`
+    is: (target: object, key: string, ...rest: any[]) => `${target[key]} is in [${rest.join(", ")}]`,
+    not: (target: object, key: string, ...rest: any[]) => `${target[key]} is not in [${rest.join(", ")}]`,
   },
   func: {
     is: (target: object, key: string, ...rest: any[]) => `${target[key]} is func()`,
-    not: (target: object, key: string, ...rest: any[]) => `${target[key]} is not func()`
+    not: (target: object, key: string, ...rest: any[]) => `${target[key]} is not func()`,
   },
   class: {
     is: (target: object, key: string, ...rest: any[]) => `${key} is type of ${rest[0].toString()}`,
-    not: (target: object, key: string, ...rest: any[]) => `${key} is not type of ${rest[0].toString()}`
-  }
-}
+    not: (target: object, key: string, ...rest: any[]) => `${key} is not type of ${rest[0].toString()}`,
+  },
+};
 
 export function setErrorMessage(setting: any) {
-  Object.assign(LocaleErrorMessages, setting)
+  (Object as any).assign(LocaleErrorMessages, setting);
 }
 
 export function mixins(...args: any[]) {
   return function <T extends { new(...args: any[]): {} }>(constructor: T) {
-    args.forEach(baseCtor => {
+    args.forEach((baseCtor) => {
       // copy property methods and values
-      Object.getOwnPropertyNames(baseCtor.prototype).forEach(name => {
-        if (name === '__validators') {
+      Object.getOwnPropertyNames(baseCtor.prototype).forEach((name) => {
+        if (name === "__validateFields") {
           return constructor.prototype[name] = (constructor.prototype[name] || []).concat(baseCtor.prototype[name]);
         }
         constructor.prototype[name] = baseCtor.prototype[name];
       });
       // copy decorators
-      (baseCtor.prototype.__validators || []).forEach((name: string) => {
-        var m = Reflect.getMetadata(METADATA_KEY, baseCtor.prototype, name)
+      (baseCtor.prototype.__validateFields || []).forEach((name: string) => {
+        const m = Reflect.getMetadata(METADATA_KEY, baseCtor.prototype, name);
         if (m) {
           Reflect.metadata(METADATA_KEY, m)(constructor.prototype, name);
         }
-      })
+      });
     });
-  }
+  };
 
 }
 
-export function getRules<T>(TClass: new () => T): { [name: string]: Array<Rule> } {
+export function getRules<T>(TClass: new () => T): { [name: string]: Rule[] } {
   const rules = {};
-  TClass.prototype.__validators.forEach((key: string) => {
-    rules[key] = Reflect.getMetadata(METADATA_KEY, TClass.prototype, key);
-  })
+  let proto = TClass.prototype;
+  while (proto) {
+    if (proto.__validateFields) {
+      for (const key of proto.__validateFields) {
+        rules[key] = Reflect.getMetadata(METADATA_KEY, proto, key);
+      }
+    }
+    proto = proto.__proto__;
+  }
   return rules;
 }
 
-export function and(...rules: Array<Rule>): Rule {
-  if (rules.length === 0) throw new Error('and must accept at lease one rule');
-  if (rules.length === 1) return rules[0];
-  return new Rule(function (target, key) {
-    for (let r of rules) {
-      let result = r.validate(target, key);
+export function validate(...rules: Rule[]) {
+  return function(target: any, key: string | symbol) {
+    // must ensure each class prototype has its own __validateFields instance;
+    if (!target.__validateFields || (target.__proto__ && target.__proto__.__validateFields === target.__validateFields)) {
+      target.__validateFields = [];
+    }
+    target.__validateFields.push(key);
+    return Reflect.metadata(METADATA_KEY, rules)(target, key);
+  };
+}
+
+export function and(...rules: Rule[]): Rule {
+  if (rules.length === 0) { throw new Error("and must accept at lease one rule"); }
+  if (rules.length === 1) { return rules[0]; }
+  return new Rule(function(target, key) {
+    for (const r of rules) {
+      const result = r.validate(target, key);
       if (result !== true) {
-        if (this._message !== undefined) return this.getMessage(target, key);
+        if (this._message !== undefined) { return this.getMessage(target, key); }
         return result;
       }
     }
     return true;
   });
 }
-export function or(...rules: Array<Rule>): Rule {
-  if (rules.length === 0) throw new Error('or must accept at lease one rule');
-  if (rules.length === 1) return rules[0];
-  return new Rule(function (target, key) {
-    let messages = [];
-    for (let r of rules) {
-      let eachResult = r.validate(target, key);
-      if (eachResult === true) return true;
+export function or(...rules: Rule[]): Rule {
+  if (rules.length === 0) { throw new Error("or must accept at lease one rule"); }
+  if (rules.length === 1) { return rules[0]; }
+  return new Rule(function(target, key) {
+    const messages = [];
+    for (const r of rules) {
+      const eachResult = r.validate(target, key);
+      if (eachResult === true) { return true; }
       messages.push(eachResult);
     }
     if (this._message !== undefined) {
       return this.getMessage(target, key);
     }
-    return messages.join(' or ');
+    return messages.join(" or ");
   });
 }
 function arrayParser(value: any, options: ValidateGetOptions): any[] {
   if (options.parseArray && !Array.isArray(value)) {
-    if (typeof (value) === 'string') {
-      return value.split(',');
+    if (typeof (value) === "string") {
+      return value.split(",");
     }
     return [value];
   }
   return value;
 }
-export function each(...rules: Array<Rule>): Rule {
-  let rule = and(...rules);
+export function each(...rules: Rule[]): Rule {
+  const rule = and(...rules);
   function validateEach(target: object, key: string) {
     let value = target[key];
 
@@ -805,13 +823,15 @@ export function each(...rules: Array<Rule>): Rule {
     if (!Array.isArray(value)) {
       return `target.${key} is not array`;
     }
-    for (let v in value) {
-      let result = rule.validate(value, v);
-      if (result !== true) {
-        if (this._message !== undefined) {
-          return this.getMessage(value, v);
+    for (const v in value) {
+      if (value.hasOwnProperty(v)) {
+        const result = rule.validate(value, v);
+        if (result !== true) {
+          if (this._message !== undefined) {
+            return this.getMessage(value, v);
+          }
+          return result;
         }
-        return result;
       }
     }
     return true;
@@ -823,8 +843,8 @@ export function each(...rules: Array<Rule>): Rule {
       value = arrayParser(value, options);
       if (options.parseArray) {
         for (let i = 0; i < value.length; i++) {
-          for (let rule of rules) {
-            let parser = (rule as any)._parser;
+          for (const rule of rules) {
+            const parser = (rule as any)._parser;
             if (parser) {
               value[i] = parser(value[i], options);
             }
@@ -832,22 +852,22 @@ export function each(...rules: Array<Rule>): Rule {
         }
       }
       return value;
-    }
+    },
   );
 }
 
-
-
 export function isClass(TClass: new () => any, target: object): boolean | string {
   const keyRules = getRules(TClass);
-  for (let key in keyRules) {
-    for (let rule of keyRules[key]) {
-      if (Array.isArray(rule)) {
-        rule = and(rule);
-      }
-      let each = rule.validate(target, key);
-      if (each !== true) {
-        return each;
+  for (const key in keyRules) {
+    if (keyRules.hasOwnProperty(key)) {
+      for (let rule of keyRules[key]) {
+        if (Array.isArray(rule)) {
+          rule = and(rule);
+        }
+        const each = rule.validate(target, key);
+        if (each !== true) {
+          return each;
+        }
       }
     }
   }
@@ -857,48 +877,43 @@ export function isClass(TClass: new () => any, target: object): boolean | string
 export function validateGet<T>(
   TClass: new () => T, target: object,
   options?: ValidateGetOptions): { instance?: T, message?: string | boolean } {
-  options = Object.assign({}, defaultValidateGetOptions, options);
+  options = (Object as any).assign({}, defaultValidateGetOptions, options);
   const keyRules = getRules(TClass);
-  let instance = new TClass();
+  const instance = new TClass();
+  for (const key in keyRules) {
+    if (keyRules.hasOwnProperty(key)) {
+      let value = target[key];
+      for (let rule of keyRules[key]) {
+        if (Array.isArray(rule)) {
+          rule = and(rule);
+        }
+        const each = rule.validate(target, key);
+        if (each !== true) {
+          return { message: each };
+        }
+        // if there is a parser
+        const parser = (rule as any)._parser;
+        if (parser) {
+          value = parser(value, options);
+        }
+      }
 
-  for (let key in keyRules) {
-    let value = target[key];
-    for (let rule of keyRules[key]) {
-      if (Array.isArray(rule)) {
-        rule = and(rule);
-      }
-      let each = rule.validate(target, key);
-      if (each !== true) {
-        return { message: each };
-      }
-      // if there is a parser
-      let parser = (rule as any)._parser
-      if (parser) {
-        value = parser(value, options);
-      }
+      (Object as any).assign(instance, { [key]: value });
     }
-
-    Object.assign(instance, { [key]: value })
   }
   if (!options.filterUnvalidateFields) {
-    for (let key in target) {
-      if (!keyRules[key]) {
-        (instance as any)[key] = target[key];
+    for (const key in target) {
+      if (target.hasOwnProperty(key)) {
+        if (!keyRules[key]) {
+          (instance as any)[key] = target[key];
+        }
       }
     }
   }
   return { instance };
 }
 
-export function validate(...rules: Array<Rule>) {
-  return function (target: any, key: string | symbol) {
-    target.__validators = target.__validators || [];
-    target.__validators.push(key);
-    return Reflect.metadata(METADATA_KEY, rules)(target, key);
-  }
-}
-
 export declare var is: RuleCreator;
-export declare var not: RuleCreator
+export declare var not: RuleCreator;
 is = new RuleCreator(false);
 not = new RuleCreator(true);
