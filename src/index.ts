@@ -35,7 +35,6 @@ export class Rule {
 
   constructor(
     validate: RuleValidate,
-    message?: RuleMessage,
     parser?: RuleParser,
   ) {
     if (typeof validate !== "function") {
@@ -43,7 +42,6 @@ export class Rule {
     }
 
     this._validate = validate;
-    this._message = message;
     this._parser = parser;
   }
 
@@ -86,273 +84,315 @@ export class RuleCreator {
   public contains(seed: string): Rule {
     return new Rule(
       this.proxyCallValidator("contains", seed),
-      this.proxyGetLocaleMessage("contains", seed),
-    );
+    ).message(this.proxyGetLocaleMessage("contains", seed));
   }
 
   // check if the string is a date that's after the specified date (true means after now).
   public after(date?: string): Rule {
     return new Rule(
-      this.proxyCallValidator("isAfter", date),
-      this.proxyGetLocaleMessage("after", date),
+      this.proxyCallValidator("isAfter", date)
+    ).message(
+      this.proxyGetLocaleMessage("after", date)
     );
   }
 
   public alpha(locale?: ValidatorJS.AlphaLocale): Rule {
     return new Rule(
-      this.proxyCallValidator("isAlpha", locale),
+      this.proxyCallValidator("isAlpha", locale)
+    ).message(
       this.proxyGetLocaleMessage("alpha", locale),
     );
   }
 
   public alphanumeric(locale?: ValidatorJS.AlphaLocale): Rule {
     return new Rule(
-      this.proxyCallValidator("isAlphanumeric", locale),
-      this.proxyGetLocaleMessage("alphanumeric", locale),
+      this.proxyCallValidator("isAlphanumeric", locale)
+    ).message(
+      this.proxyGetLocaleMessage("alphanumeric", locale)
     );
   }
   public ascii(): Rule {
     return new Rule(
-      this.proxyCallValidator("isAscii"),
-      this.proxyGetLocaleMessage("ascii"),
+      this.proxyCallValidator("isAscii")
+    ).message(
+      this.proxyGetLocaleMessage("ascii")
     );
   }
   public base64(): Rule {
     return new Rule(
-      this.proxyCallValidator("isBase64"),
-      this.proxyGetLocaleMessage("base64"),
+      this.proxyCallValidator("isBase64")
+    ).message(
+      this.proxyGetLocaleMessage("base64")
     );
   }
   public before(date?: string): Rule {
     return new Rule(
-      this.proxyCallValidator("isBefore", date),
-      this.proxyGetLocaleMessage("before", date),
+      this.proxyCallValidator("isBefore", date)
+    ).message(
+      this.proxyGetLocaleMessage("before", date)
     );
   }
   public byteLength(options: ValidatorJS.IsByteLengthOptions): Rule;
   public byteLength(min: number, max?: number): Rule;
   public byteLength(min: any, max?: any): Rule {
     return new Rule(
-      this.proxyCallValidator("isByteLength", min, max),
-      this.proxyGetLocaleMessage("byteLength", min, max),
+      this.proxyCallValidator("isByteLength", min, max)
+    ).message(
+      this.proxyGetLocaleMessage("byteLength", min, max)
     );
   }
   public creditCard(): Rule {
     return new Rule(
-      this.proxyCallValidator("isCreditCard"),
-      this.proxyGetLocaleMessage("creditCard"),
+      this.proxyCallValidator("isCreditCard")
+    ).message(
+      this.proxyGetLocaleMessage("creditCard")
     );
   }
   public currency(options?: ValidatorJS.IsCurrencyOptions): Rule {
     return new Rule(
-      this.proxyCallValidator("isCurrency", options),
-      this.proxyGetLocaleMessage("currency", options),
+      this.proxyCallValidator("isCurrency", options)
+    ).message(
+      this.proxyGetLocaleMessage("currency", options)
     );
   }
   public dataURI(): Rule {
     return new Rule(
-      this.proxyCallValidator("isDataURI"),
-      this.proxyGetLocaleMessage("dataURI"),
+      this.proxyCallValidator("isDataURI")
+    ).message(
+      this.proxyGetLocaleMessage("dataURI")
     );
   }
   public email(options?: ValidatorJS.IsEmailOptions): Rule {
     return new Rule(
-      this.proxyCallValidator("isEmail", options),
-      this.proxyGetLocaleMessage("email", options),
+      this.proxyCallValidator("isEmail", options)
+    ).message(
+      this.proxyGetLocaleMessage("email", options)
     );
   }
   public FQDN(options?: ValidatorJS.IsFQDNOptions): Rule {
     return new Rule(
-      this.proxyCallValidator("isFQDN", options),
-      this.proxyGetLocaleMessage("FQDN", options),
+      this.proxyCallValidator("isFQDN", options)
+    ).message(
+      this.proxyGetLocaleMessage("FQDN", options)
     );
   }
   public fullWidth(): Rule {
     return new Rule(
-      this.proxyCallValidator("isFullWidth"),
-      this.proxyGetLocaleMessage("fullWidth"),
+      this.proxyCallValidator("isFullWidth")
+    ).message(
+      this.proxyGetLocaleMessage("fullWidth")
     );
   }
   public halfWidth(): Rule {
     return new Rule(
-      this.proxyCallValidator("isHalfWidth"),
-      this.proxyGetLocaleMessage("halfWidth"),
+      this.proxyCallValidator("isHalfWidth")
+    ).message(
+      this.proxyGetLocaleMessage("halfWidth")
     );
   }
   public hash(algorithm: ValidatorJS.HashAlgorithm): Rule {
     return new Rule(
-      this.proxyCallValidator("isHash", algorithm),
-      this.proxyGetLocaleMessage("hash", algorithm),
+      this.proxyCallValidator("isHash", algorithm)
+    ).message(
+      this.proxyGetLocaleMessage("hash", algorithm)
     );
   }
   public hexColor(): Rule {
     return new Rule(
-      this.proxyCallValidator("isHexColor"),
-      this.proxyGetLocaleMessage("hexColor"),
+      this.proxyCallValidator("isHexColor")
+    ).message(
+      this.proxyGetLocaleMessage("hexColor")
     );
   }
   public hexadecimal(): Rule {
     return new Rule(
-      this.proxyCallValidator("isHexadecimal"),
-      this.proxyGetLocaleMessage("hexadecimal"),
+      this.proxyCallValidator("isHexadecimal")
+    ).message(
+      this.proxyGetLocaleMessage("hexadecimal")
     );
   }
   public IP(version?: number): Rule {
     return new Rule(
-      this.proxyCallValidator("isIP", version),
-      this.proxyGetLocaleMessage("IP", version),
+      this.proxyCallValidator("isIP", version)
+    ).message(
+      this.proxyGetLocaleMessage("IP", version)
     );
   }
   public ISBN(version?: number): Rule {
     return new Rule(
-      this.proxyCallValidator("isISBN", version),
-      this.proxyGetLocaleMessage("ISBN", version),
+      this.proxyCallValidator("isISBN", version)
+    ).message(
+      this.proxyGetLocaleMessage("ISBN", version)
     );
   }
   public ISSN(options?: ValidatorJS.IsISSNOptions): Rule {
     return new Rule(
-      this.proxyCallValidator("isISSN", options),
-      this.proxyGetLocaleMessage("ISSN", options),
+      this.proxyCallValidator("isISSN", options)
+    ).message(
+      this.proxyGetLocaleMessage("ISSN", options)
     );
   }
   public ISIN(): Rule {
     return new Rule(
-      this.proxyCallValidator("isISIN"),
-      this.proxyGetLocaleMessage("ISIN"),
+      this.proxyCallValidator("isISIN")
+    ).message(
+      this.proxyGetLocaleMessage("ISIN")
     );
   }
   public ISO8601(): Rule {
     return new Rule(
-      this.proxyCallValidator("isISO8601"),
-      this.proxyGetLocaleMessage("ISO8601"),
+      this.proxyCallValidator("isISO8601")
+    ).message(
+      this.proxyGetLocaleMessage("ISO8601")
     );
   }
   public ISO31661Alpha2(): Rule {
     return new Rule(
-      this.proxyCallValidator("isISO31661Alpha2"),
-      this.proxyGetLocaleMessage("ISO31661Alpha2"),
+      this.proxyCallValidator("isISO31661Alpha2")
+    ).message(
+      this.proxyGetLocaleMessage("ISO31661Alpha2")
     );
   }
   public ISRC(): Rule {
     return new Rule(
-      this.proxyCallValidator("isISRC"),
-      this.proxyGetLocaleMessage("ISRC"),
+      this.proxyCallValidator("isISRC")
+    ).message(
+      this.proxyGetLocaleMessage("ISRC")
     );
   }
   public JSON(): Rule {
     return new Rule(
-      this.proxyCallValidator("isJSON"),
-      this.proxyGetLocaleMessage("JSON"),
+      this.proxyCallValidator("isJSON")
+    ).message(
+      this.proxyGetLocaleMessage("JSON")
     );
   }
   public latLong(): Rule {
     return new Rule(
-      this.proxyCallValidator("isLatLong"),
-      this.proxyGetLocaleMessage("latLong"),
+      this.proxyCallValidator("isLatLong")
+    ).message(
+      this.proxyGetLocaleMessage("latLong")
     );
   }
   public length(options: ValidatorJS.IsLengthOptions): Rule;
   public length(min: number, max?: number): Rule;
   public length(min: any, max?: any): Rule {
     return new Rule(
-      this.proxyCallValidator("isLength", min, max),
-      this.proxyGetLocaleMessage("length", min, max),
+      this.proxyCallValidator("isLength", min, max)
+    ).message(
+      this.proxyGetLocaleMessage("length", min, max)
     );
   }
   public lowercase(): Rule {
     return new Rule(
-      this.proxyCallValidator("isLowercase"),
-      this.proxyGetLocaleMessage("lowercase"),
+      this.proxyCallValidator("isLowercase")
+    ).message(
+      this.proxyGetLocaleMessage("lowercase")
     );
   }
   public MACAddress(): Rule {
     return new Rule(
-      this.proxyCallValidator("isMACAddress"),
-      this.proxyGetLocaleMessage("MACAddress"),
+      this.proxyCallValidator("isMACAddress")
+    ).message(
+      this.proxyGetLocaleMessage("MACAddress")
     );
   }
   public MD5(): Rule {
     return new Rule(
-      this.proxyCallValidator("isMD5"),
-      this.proxyGetLocaleMessage("MD5"),
+      this.proxyCallValidator("isMD5")
+    ).message(
+      this.proxyGetLocaleMessage("MD5")
     );
   }
   public mimeType(): Rule {
     return new Rule(
-      this.proxyCallValidator("isMimeType"),
-      this.proxyGetLocaleMessage("mimeType"),
+      this.proxyCallValidator("isMimeType")
+    ).message(
+      this.proxyGetLocaleMessage("mimeType")
     );
   }
   public mobilePhone(locale: ValidatorJS.MobilePhoneLocale, options?: ValidatorJS.IsMobilePhoneOptions): Rule {
     return new Rule(
-      this.proxyCallValidator("isMobilePhone", locale, options),
-      this.proxyGetLocaleMessage("mobilePhone", locale, options),
+      this.proxyCallValidator("isMobilePhone", locale, options)
+    ).message(
+      this.proxyGetLocaleMessage("mobilePhone", locale, options)
     );
   }
   public mongoId(): Rule {
     return new Rule(
-      this.proxyCallValidator("isMongoId"),
-      this.proxyGetLocaleMessage("mongoId"),
+      this.proxyCallValidator("isMongoId")
+    ).message(
+      this.proxyGetLocaleMessage("mongoId")
     );
   }
   public multibyte(): Rule {
     return new Rule(
-      this.proxyCallValidator("isMultibyte"),
-      this.proxyGetLocaleMessage("multibyte"),
+      this.proxyCallValidator("isMultibyte")
+    ).message(
+      this.proxyGetLocaleMessage("multibyte")
     );
   }
   public numeric(options?: ValidatorJS.IsNumericOptions): Rule {
     return new Rule(
-      this.proxyCallValidator("isNumeric", options),
-      this.proxyGetLocaleMessage("numeric", options),
+      this.proxyCallValidator("isNumeric", options)
+    ).message(
+      this.proxyGetLocaleMessage("numeric", options)
     );
   }
   public postalCode(locale: ValidatorJS.PostalCodeLocale): Rule {
     return new Rule(
-      this.proxyCallValidator("isPostalCode", locale),
-      this.proxyGetLocaleMessage("postalCode", locale),
+      this.proxyCallValidator("isPostalCode", locale)
+    ).message(
+      this.proxyGetLocaleMessage("postalCode", locale)
     );
   }
   public surrogatePair(): Rule {
     return new Rule(
-      this.proxyCallValidator("isSurrogatePair"),
-      this.proxyGetLocaleMessage("surrogatePair"),
+      this.proxyCallValidator("isSurrogatePair")
+    ).message(
+      this.proxyGetLocaleMessage("surrogatePair")
     );
   }
   public URL(options?: ValidatorJS.IsURLOptions): Rule {
     return new Rule(
-      this.proxyCallValidator("isURL", options),
-      this.proxyGetLocaleMessage("URL", options),
+      this.proxyCallValidator("isURL", options)
+    ).message(
+      this.proxyGetLocaleMessage("URL", options)
     );
   }
   public UUID(version?: 3 | 4 | 5 | "3" | "4" | "5" | "all"): Rule {
     return new Rule(
-      this.proxyCallValidator("isUUID", version),
-      this.proxyGetLocaleMessage("UUID", version),
+      this.proxyCallValidator("isUUID", version)
+    ).message(
+      this.proxyGetLocaleMessage("UUID", version)
     );
   }
   public uppercase(): Rule {
     return new Rule(
-      this.proxyCallValidator("isUppercase"),
-      this.proxyGetLocaleMessage("uppercase"),
+      this.proxyCallValidator("isUppercase")
+    ).message(
+      this.proxyGetLocaleMessage("uppercase")
     );
   }
   public variableWidth(): Rule {
     return new Rule(
-      this.proxyCallValidator("isVariableWidth"),
-      this.proxyGetLocaleMessage("variableWidth"),
+      this.proxyCallValidator("isVariableWidth")
+    ).message(
+      this.proxyGetLocaleMessage("variableWidth")
     );
   }
   public whitelisted(chars: string | string[]): Rule {
     return new Rule(
-      this.proxyCallValidator("isWhitelisted", chars),
-      this.proxyGetLocaleMessage("whitelisted", chars),
+      this.proxyCallValidator("isWhitelisted", chars)
+    ).message(
+      this.proxyGetLocaleMessage("whitelisted", chars)
     );
   }
   public matches(pattern: string | RegExp, modifiers?: string): Rule {
     return new Rule(
-      this.proxyCallValidator("matches", pattern, modifiers),
-      this.proxyGetLocaleMessage("matches", pattern, modifiers),
+      this.proxyCallValidator("matches", pattern, modifiers)
+    ).message(
+      this.proxyGetLocaleMessage("matches", pattern, modifiers)
     );
   }
 
@@ -360,8 +400,9 @@ export class RuleCreator {
   public decimal(options?: ValidatorJS.IsDecimalOptions): Rule {
     return new Rule(
       this.proxyCallValidator("isDecimal", options),
-      this.proxyGetLocaleMessage("decimal", options),
-      floatParser,
+      floatParser
+    ).message(
+      this.proxyGetLocaleMessage("decimal", options)
     );
   }
 
@@ -369,8 +410,9 @@ export class RuleCreator {
   public divisibleBy(number: number): Rule {
     return new Rule(
       this.proxyCallValidator("isDivisibleBy", number),
-      this.proxyGetLocaleMessage("divisibleBy", number),
-      floatParser,
+      floatParser
+    ).message(
+      this.proxyGetLocaleMessage("divisibleBy", number)
     );
   }
 
@@ -378,8 +420,9 @@ export class RuleCreator {
   public float(options?: ValidatorJS.IsFloatOptions): Rule {
     return new Rule(
       this.proxyCallValidator("isFloat", options),
-      this.proxyGetLocaleMessage("float", options),
-      floatParser,
+      floatParser
+    ).message(
+      this.proxyGetLocaleMessage("float", options)
     );
   }
 
@@ -387,77 +430,87 @@ export class RuleCreator {
   public int(options?: ValidatorJS.IsIntOptions): Rule {
     return new Rule(
       this.proxyCallValidator("isInt", options),
-      this.proxyGetLocaleMessage("int", options),
-      intParser,
+      intParser
+    ).message(
+      this.proxyGetLocaleMessage("int", options)
     );
   }
 
   // check if the string is a valid port number.
   public port(): Rule {
     return new Rule(
-      this.proxyCallValidator("isPort"),
-      this.proxyGetLocaleMessage("port"),
+      this.proxyCallValidator("isPort")
+    ).message(
+      this.proxyGetLocaleMessage("port")
     );
   }
 
   // check if the string matches the comparison.
   public equals(comparison: any): Rule {
     return new Rule(
-      this.proxyCallValidator("equals", comparison),
-      this.proxyGetLocaleMessage("equals", comparison),
+      this.proxyCallValidator("equals", comparison)
+    ).message(
+      this.proxyGetLocaleMessage("equals", comparison)
     );
   }
 
   // ===
   public tribleEquals(comparison: any): Rule {
     return new Rule(
-      this.proxyCall((target, key) => target[key] === comparison),
-      this.proxyGetLocaleMessage("tribleEquals", comparison),
+      this.proxyCall((target, key) => target[key] === comparison)
+    ).message(
+      this.proxyGetLocaleMessage("tribleEquals", comparison)
     );
   }
 
   // ==
   public doubleEquals(comparison: any): Rule {
     return new Rule(
-      this.proxyCall((target, key) => target[key] == comparison),
-      this.proxyGetLocaleMessage("doubleEquals", comparison),
+      this.proxyCall((target, key) => target[key] == comparison)
+    ).message(
+      this.proxyGetLocaleMessage("doubleEquals", comparison)
     );
   }
 
   // check if the string has a length of zero or undefined.
   public empty(): Rule {
     return new Rule(
-      this.proxyCallValidator("isEmpty"),
-      this.proxyGetLocaleMessage("empty"),
+      this.proxyCallValidator("isEmpty")
+    ).message(
+      this.proxyGetLocaleMessage("empty")
     );
   }
 
   // check if value is not undefined
   public required(): Rule {
     return new Rule(
-      this.proxyCall((target, key) => (target[key] !== undefined && target[key] !== null)),
-      this.proxyGetLocaleMessage("required"),
+      this.proxyCall((target, key) => (target[key] !== undefined && target[key] !== null))
+    ).message(
+      this.proxyGetLocaleMessage("required")
     );
   }
 
   // check if the string is in a array of allowed values.
   public in(values: any[]): Rule {
     return new Rule(
-      this.proxyCallValidator("isIn", values),
-      this.proxyGetLocaleMessage("in", values),
+      this.proxyCallValidator("isIn", values)
+    ).message(
+      this.proxyGetLocaleMessage("in", values)
     );
   }
   public func(f: (target: any, key: string) => boolean | string): Rule {
     return new Rule(
-      this.proxyCall((target, key) => f(target, key)),
-      this.proxyGetLocaleMessage("func"),
+      this.proxyCall((target, key) => f(target, key))
+    ).message(
+      this.proxyGetLocaleMessage("func")
     );
   }
   public class(TClass: new () => any): Rule {
     return new Rule(
       this.proxyCall((target, key, ...rest: any[]) => (isClass as any)(TClass, target[key], ...rest)),
-      this.proxyGetLocaleMessage("class", TClass),
       (value: any, options: ValidateGetOptions) => validateGet(TClass, value, options).instance,
+    ).message(
+      this.proxyGetLocaleMessage("class", TClass)
     );
   }
   private proxyCallValidator = (validatorMethod: keyof ValidatorJS.ValidatorStatic, ...rest: any[]) => {
@@ -778,32 +831,56 @@ export function validate(...rules: Rule[]) {
 export function and(...rules: Rule[]): Rule {
   if (rules.length === 0) { throw new Error("and must accept at lease one rule"); }
   if (rules.length === 1) { return rules[0]; }
-  return new Rule(function(target, key) {
-    for (const r of rules) {
-      const result = r.validate(target, key);
-      if (result !== true) {
-        if (this._message !== undefined) { return this.getMessage(target, key); }
-        return result;
+  return new Rule(
+    function(target, key) {
+      for (const r of rules) {
+        const result = r.validate(target, key);
+        if (result !== true) {
+          if (this._message !== undefined) { return this.getMessage(target, key); }
+          return result;
+        }
       }
-    }
-    return true;
-  });
+      return true;
+    },
+    (value, options) => {
+      for (const rule of rules) {
+        const parser = (rule as any)._parser;
+        if (parser) {
+          value = parser(value, options);
+        }
+      }
+      return value;
+    });
 }
 export function or(...rules: Rule[]): Rule {
   if (rules.length === 0) { throw new Error("or must accept at lease one rule"); }
   if (rules.length === 1) { return rules[0]; }
-  return new Rule(function(target, key) {
-    const messages = [];
-    for (const r of rules) {
-      const eachResult = r.validate(target, key);
-      if (eachResult === true) { return true; }
-      messages.push(eachResult);
+  return new Rule(
+    function(target, key) {
+      const messages = [];
+      for (const r of rules) {
+        const eachResult = r.validate(target, key);
+        if (eachResult === true) { return true; }
+        messages.push(eachResult);
+      }
+      if (this._message !== undefined) {
+        return this.getMessage(target, key);
+      }
+      return messages.join(" or ");
+    },
+    (value, options) => {
+      for (const rule of rules) {
+        const parser = (rule as any)._parser;
+        if (rule.validate({ value }, 'value') === true) {
+          if (parser) {
+            return parser(value, options);
+          }
+          return value;
+        }
+      }
+      return value;
     }
-    if (this._message !== undefined) {
-      return this.getMessage(target, key);
-    }
-    return messages.join(" or ");
-  });
+  );
 }
 function arrayParser(value: any, options: ValidateGetOptions): any[] {
   if (options.parseArray && !Array.isArray(value)) {
@@ -838,7 +915,6 @@ export function each(...rules: Rule[]): Rule {
   }
   return new Rule(
     validateEach,
-    undefined,
     (value, options) => {
       value = arrayParser(value, options);
       if (options.parseArray) {
