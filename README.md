@@ -1,5 +1,5 @@
 # ts-class-validator
-Declarative typescript validator with nested logic operator support.
+Declarative typescript validator with nested logic operator support. (中文文档)[https://github.com/SijieCai/ts-class-validator/blob/master/README-zh_CN.md]
 
 ## Installation
 
