@@ -1,22 +1,22 @@
 # ts-class-validator
-Declarative typescript validator with nested logic operator support.
+支持嵌套逻辑操作符的声明式TypeScript验证器
 
-## Installation
+## 安装
 
 ```
 npm install ts-class-validator --save
 ```
 
-## Usage
+## 使用
 
 ``` typescript
 import { validate, is, not, and, or, each, isClass, validateGet, mixins } from 'ts-class-validator';
 
 ```
 
-### Primitive type validation
+### 基本类型验证
 
-Each validate default is not required, which means value of `null` or `undefined` will always passed validation, unless you put a `is.required()` on top.
+每个validate默认不是必须的，除非你将`is.required()`放在顶部，否则`null` 和 `undefined`总是会通过验证
 
 ``` typescript 
 class PrimitiveClass {
@@ -45,8 +45,10 @@ validateGet(PrimitiveClass, { name: '360', age: 5 })
 
 
 
-### Array validation
-Use `each` to validate array, you can even nested `each` to validate two-dimensional array.
+### 数组验证
+
+使用 `each` 验证数组，你也可以嵌套 `each` 来验证二维数组。
+
 ``` typescript 
 class ArrayClass {
   @validate(
@@ -86,7 +88,7 @@ validateGet(ArrayClass, {value: '1,2', value2: [[1, 2],[3, '4']]})
 
 ```
 
-### Nested class validation
+### 嵌套class验证
 
 ``` typescript 
 
@@ -102,9 +104,11 @@ class DeeplyNestedClass {
 
 ```
 
-### Logical operator
-You can use `and`, `or` logical operator, they can be nested to work as expected.
-All ValidateRule can specify `onlyIf` conditional to enable/disable this validation.
+### 逻辑操作符
+
+你可以使用 `and`, `or` 逻辑操作符，他们也可以在嵌套中使用。
+所有验证规则都可以指定 `onlyIf` 来选择开启或关闭这个验证。
+
 ``` typescript
 class AndOrClass {
   @validate(or(
@@ -129,7 +133,7 @@ class OnlyIfClass {
 }
 ```
 
-### Customize error message
+### 自定义错误信息
 ``` typescript
 class CustomizeMessageClass {
   @validate(
@@ -144,7 +148,7 @@ class CustomizeMessageClass {
 }
 ```
 
-### Extends validation class
+### 继承验证类
 
 ``` typescript 
 
@@ -165,7 +169,7 @@ console.log(instance.getId()); // 'prefix-1'
 ```
 
 
-### Mixin validation class
+### 混合验证类
 
 ``` typescript 
 
@@ -197,16 +201,20 @@ console.log(instance.getId()); // 'prefix-1'
 
 ```
 
-### Validate rules
-`is` and `not` are buildin rule creator which support all [validator.js](https://github.com/chriso/validator.js) static methods(exclude sanitizer methods), in addition we add bellow methods:
-- func(customValidator: (target: any, key: string) => boolean | string): to defined customValidator logic, basically you are able to write anything here.
-- class(TClass: new () => any, fieldsPattern?: string): similar to isClass, is to validate nested class type.
-- required(): value with `null` or `undefined` will failed here, while success in all other validate rules.
-- tripleEquals(value: any): compare target === value
-- doubleEquals(value: any): compare target == value
+### 验证规则
 
-### Create your own rule creator
-You can define your own rule creator which return a Rule, it can be compose and reused. For example, you want to perform a JSON parse on some fields on validation, like this:
+`is` 和 `not` 是内建的规则生成器生成的，它们支持所有 [validator.js](https://github.com/chriso/validator.js)
+的静态方法（除 sanitizer），此外我们增加了以下方法：
+- func(customValidator: (target: any, key: string) => boolean | string): 定义一个自定义验证器逻辑，你可以在这里写任何东西。
+- class(TClass: new () => any, fieldsPattern?: string): 和isClass类似, 定义一个嵌套的class类型。
+- required(): 所有其它验证都通过时，value为 `null` 或者 `undefined` 不能通过验证.
+- tripleEquals(value: any): 比较 target === value
+- doubleEquals(value: any): 比较 target == value
+
+### 创建你自己的规则生成器
+
+你可以定义你自己的规则生成器返回一个规则，它能够被组合（compose）和重用（reused），例如，你想要在JSON解析时验证一些字段，你可以这样做：
+
 ``` typescript
 
 class Person {/* .... */}
@@ -224,7 +232,9 @@ validateGet(SomeClass, {person: '{"person":{"name":"","age":40}}'}, {parseJSON: 
 // SomeClass { person: Person {name: '', age: 40} }
 
 ```
-To implement jsonParse as bellow:
+
+实现 jsonParse ：
+
 ``` typescript
 import { Rule, and } from 'ts-class-validation';
 function jsonParse(...rules: Rule[]) {
@@ -250,8 +260,8 @@ function jsonParse(...rules: Rule[]) {
 }
 ```
 
-### validateGet options
-`validateGet` accept a third optional params 
+### validateGet 选项
+`validateGet` 接收三个可选参数
 
 ``` typescript
 
@@ -263,8 +273,10 @@ interface ValidateGetOptions {
 }
 
 ```
-## Localization
-Each failed validation will display a buildin error message, you can override each rule by use `.message()` method, or you can override the default message:
+## 本地化
+
+每个失败的验证将显示一条内置的错误信息，你可以用 `.message()` 方法重写每个规则的错误信息，或者你可以重写默认错误信息。
+
 ``` typescript
 import { setErrorMessage } from 'ts-class-validator';
 setErrorMessage({
@@ -281,6 +293,10 @@ setErrorMessage({
 
 ```
 
-## Async Support
-No async validate method support for now!
-Async validation mixed with sync ones may cause performance issues. why? Most of the time async validation is time consuming, we normally want to success all the sync validations first, and then do the async ones; one after another, or parallelly, depends on real situation. If we design the interface to support all above scenarios, it may end up ugly. Let me know if you have better idea.
+## 异步支持
+
+现在不支持异步的验证方法！
+
+异步验证混合同步的可能会导致性能问题，为什么？大多是时候异步验证很耗时，我们通常想同步验证成功后再一个接一个或者并行做异步，这取决于应用的情况，但如果我们设计接口时去支持所有的情景，最终可能会导致它非常丑陋。
+
+如果你有更好的想法，欢迎告诉我。
