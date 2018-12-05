@@ -1,3 +1,8 @@
+[![APMLicense](https://img.shields.io/apm/l/vim-mode.svg)](https://github.com/SijieCai/ts-class-validator)
+[![Build Status](https://travis-ci.org/SijieCai/ts-class-validator.svg?branch=master)](https://travis-ci.org/SijieCai/ts-class-validator)
+[![codecov](https://codecov.io/gh/SijieCai/ts-class-validator/branch/master/graph/badge.svg)](https://codecov.io/gh/SijieCai/ts-class-validator)
+
+
 # ts-class-validator
 Declarative typescript validator with nested logic operator support. [中文文档](https://github.com/SijieCai/ts-class-validator/blob/master/README-zh_CN.md)
 

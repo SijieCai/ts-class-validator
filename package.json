@@ -4,7 +4,7 @@
   "description": "Declarative typescript validator with nested logic operator support.",
   "main": "dist/index.js",
   "scripts": {
-    "test": "jest",
+    "test": "jest --coverage",
     "build": "tsc -d src/index.ts --declarationDir ./ --outDir dist",
     "lint": "tslint \"src/**/*.ts\"",
     "lint-fix": "tslint --fix \"src/**/*.ts\"",
