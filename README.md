@@ -1,3 +1,6 @@
+[![APMLicense](https://img.shields.io/apm/l/vim-mode.svg)](https://github.com/SijieCai/ts-class-validator)
+
+
 # ts-class-validator
 Declarative typescript validator with nested logic operator support. [中文文档](https://github.com/SijieCai/ts-class-validator/blob/master/README-zh_CN.md)
 
