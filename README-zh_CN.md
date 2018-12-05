@@ -249,13 +249,14 @@ function jsonParse(...rules: Rule[]) {
 
       return and(...rules).validate(target, key);
     },
-    function getMessage(target, key) { return `target.${key} is not a validate json` },
     function validateGetParser(value, options) {
       if (options.parseJSON) { // parseJSON passed in by validateGet(a, b, options)
         return JSON.parse(value);
       }
       return value;
     }
+  ).message(
+    (target, key) => `target.${key} is not a validate json`
   );
 }
 ```
