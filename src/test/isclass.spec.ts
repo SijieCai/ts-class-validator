@@ -73,6 +73,55 @@ class MixinClass implements IdClass, NameClass {
   public numberValue: number;
 }
 
+class ValidateIsClass {
+  @validate(is.after())
+  public after: string;
+
+  @validate(is.alpha())
+  public alpha: string;
+
+  @validate(is.alphanumeric())
+  public alphanumeric: string;
+
+  @validate(is.ascii())
+  public ascii: string;
+
+  @validate(is.base64())
+  public base64: string;
+
+  @validate(is.before())
+  public before: string;
+
+  @validate(is.byteLength(4, 12))
+  public byteLength: string;
+
+  @validate(is.creditCard())
+  public creditCard: string;
+
+  @validate(is.currency({
+    symbol: '$',
+    require_symbol: true,
+    allow_space_after_symbol: false,
+  }))
+  public currency: string;
+
+  @validate(is.dataURI())
+  public dataURI: string;
+
+  @validate(is.email())
+  public email: string;
+
+  @validate(is.FQDN())
+  public FQDN: string;
+
+  @validate(is.fullWidth())
+  public fullWidth: string;
+
+  @validate(is.port())
+  public port: string;
+
+}
+
 // 不支持继承复用
 
 test("each", () => {
@@ -85,6 +134,86 @@ test("is string", () => {
   expect(isClass(NameClass, { name: "360" })).not.toBe(true);
   expect(isClass(NameClass, { name: "13602545698" })).not.toBe(true);
   expect(isClass(NameClass, { name: "sdfsdfs" })).not.toBe(true);
+});
+
+test("is after", () => {
+  expect(isClass(ValidateIsClass, { after: "2099-12-10 11:11:10" })).toBe(true);
+  expect(isClass(ValidateIsClass, { after: "2011-12-10 11:11:10" })).not.toBe(true);
+});
+
+test("is alpha", () => {
+  expect(isClass(ValidateIsClass, { alpha: "abcd" })).toBe(true);
+  expect(isClass(ValidateIsClass, { alpha: "ab-cd" })).not.toBe(true);
+  expect(isClass(ValidateIsClass, { alpha: "abcd123" })).not.toBe(true);
+});
+
+test("is alphanumeric", () => {
+  expect(isClass(ValidateIsClass, { alphanumeric: "abcd" })).toBe(true);
+  expect(isClass(ValidateIsClass, { alphanumeric: "1234" })).toBe(true);
+  expect(isClass(ValidateIsClass, { alphanumeric: "abcd123" })).toBe(true);
+  expect(isClass(ValidateIsClass, { alphanumeric: "abcd-123" })).not.toBe(true);
+});
+
+test("is ascii", () => {
+  expect(isClass(ValidateIsClass, { ascii: "74" })).toBe(true);
+  expect(isClass(ValidateIsClass, { ascii: "u4f60u597d" })).toBe(true);
+  expect(isClass(ValidateIsClass, { ascii: "\u4f60\u597d" })).not.toBe(true);
+});
+
+test("is base64", () => {
+  expect(isClass(ValidateIsClass, { base64: "i am not base64" })).not.toBe(true);
+});
+
+test("is before", () => {
+  expect(isClass(ValidateIsClass, { before: "2011-12-10 11:11:10" })).toBe(true);
+  expect(isClass(ValidateIsClass, { before: "2099-12-10 11:11:10" })).not.toBe(true);
+});
+
+test("byteLength", () => {
+  expect(isClass(ValidateIsClass, { byteLength: "hello" })).toBe(true);
+  expect(isClass(ValidateIsClass, { byteLength: "你好" })).toBe(true);
+  expect(isClass(ValidateIsClass, { byteLength: "hi" })).not.toBe(true);
+});
+
+test("is creditCard", () => {
+  expect(isClass(ValidateIsClass, { creditCard: '5105105105105100' })).toBe(true);
+  expect(isClass(ValidateIsClass, { creditCard: 'string' })).not.toBe(true);
+});
+
+test("is currency", () => {
+  expect(isClass(ValidateIsClass, { currency: '$12' })).toBe(true);
+  expect(isClass(ValidateIsClass, { currency: '$ 12' })).not.toBe(true);
+  expect(isClass(ValidateIsClass, { currency: '12' })).not.toBe(true);
+});
+
+test("is dataURI", () => {
+  expect(isClass(ValidateIsClass, { dataURI: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAUAAAAFCAYAAACNbyblAAAAHElEQVQI12P4//8/w38GIAXDIBKE0DHxgljNBAAO9TXL0Y4OHwAAAABJRU5ErkJggg==' })).toBe(true);
+  expect(isClass(ValidateIsClass, { dataURI: 'string' })).not.toBe(true);
+});
+
+test("is email", () => {
+  expect(isClass(ValidateIsClass, { email: "jason@gmail.com" })).toBe(true);
+  expect(isClass(ValidateIsClass, { email: 'jason@gmail' })).not.toBe(true);
+});
+
+test("is FQDN", () => {
+  expect(isClass(ValidateIsClass, { FQDN: "domain.com" })).toBe(true);
+  expect(isClass(ValidateIsClass, { FQDN: 'domain' })).not.toBe(true);
+});
+
+test("is fullWidth", () => {
+  expect(isClass(ValidateIsClass, { fullWidth: "hello，" })).toBe(true);
+  expect(isClass(ValidateIsClass, { fullWidth: 'hello,' })).not.toBe(true);
+});
+
+test("is port", () => {
+  expect(isClass(ValidateIsClass, { port: '8080' })).toBe(true);
+  expect(isClass(ValidateIsClass, { port: '65536' })).toMatch('is port');
+  expect(isClass(ValidateIsClass, { port: '65536' })).not.toBe(true);
+});
+
+test("is number", () => {
+  expect(isClass(NameClass, { name: "360sdfsdf" })).toBe(true);
 });
 
 test("nexted class", () => {
