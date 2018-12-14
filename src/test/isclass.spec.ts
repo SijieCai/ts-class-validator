@@ -117,6 +117,71 @@ class ValidateIsClass {
   @validate(is.fullWidth())
   public fullWidth: string;
 
+  @validate(is.halfWidth())
+  public halfWidth: string;
+
+  @validate(
+    is.hash('md5'),
+    or(
+      is.hash('sha256')
+    )
+  )
+  public hash: string;
+
+  @validate(is.hexColor())
+  public hexColor: string;
+
+  @validate(is.hexadecimal())
+  public hexadecimal: string;
+
+  @validate(is.IP())
+  public IP: string;
+
+  @validate(is.ISBN())
+  public ISBN: string;
+
+  @validate(is.ISSN())
+  public ISSN: string;
+
+  @validate(is.ISIN())
+  public ISIN: string;
+
+  @validate(is.ISO8601())
+  public ISO8601: string;
+
+  @validate(is.ISO31661Alpha2())
+  public ISO31661Alpha2: string;
+
+  @validate(is.ISRC())
+  public ISRC: string;
+
+  @validate(is.JSON())
+  public JSON: string;
+
+  @validate(is.latLong())
+  public latLong: string;
+
+  @validate(is.length(2, 4))
+  public length: string;
+
+  @validate(is.lowercase())
+  public lowercase: string;
+
+  @validate(is.MACAddress())
+  public MACAddress: string;
+
+  @validate(is.MD5())
+  public MD5: string;
+
+  @validate(is.mimeType())
+  public mimeType: string;
+
+  @validate(is.mobilePhone("zh-CN"))
+  public mobilePhone: string;
+
+  @validate(is.mongoId())
+  public mongoId: string;
+
   @validate(is.port())
   public port: string;
 
@@ -204,6 +269,106 @@ test("is FQDN", () => {
 test("is fullWidth", () => {
   expect(isClass(ValidateIsClass, { fullWidth: "hello，" })).toBe(true);
   expect(isClass(ValidateIsClass, { fullWidth: 'hello,' })).not.toBe(true);
+});
+
+test("is halfWidth", () => {
+  expect(isClass(ValidateIsClass, { halfWidth: "hello" })).toBe(true);
+  expect(isClass(ValidateIsClass, { halfWidth: 'ア' })).not.toBe(true);
+});
+
+test("is hash", () => {
+  // expect(isClass(ValidateIsClass, { hash: "bc4b2a76b9719d91" })).toBe(true);
+  expect(isClass(ValidateIsClass, { hash: 'hello' })).not.toBe(true);
+});
+
+test("is hexColor", () => {
+  expect(isClass(ValidateIsClass, { hexColor: "#f40059" })).toBe(true);
+  expect(isClass(ValidateIsClass, { hexColor: 'rgba(0, 0, 0, .8)' })).not.toBe(true);
+});
+
+test("is hexadecimal", () => {
+  expect(isClass(ValidateIsClass, { hexadecimal: "1111" })).toBe(true);
+  expect(isClass(ValidateIsClass, { hexadecimal: 'hello' })).not.toBe(true);
+});
+
+test("is IP", () => {
+  expect(isClass(ValidateIsClass, { IP: "127.0.0.1" })).toBe(true);
+  expect(isClass(ValidateIsClass, { IP: 'hello' })).not.toBe(true);
+});
+
+test("is ISBN", () => {
+  expect(isClass(ValidateIsClass, { ISBN: "978-3-16-148410-0" })).toBe(true);
+  expect(isClass(ValidateIsClass, { ISBN: 'hel' })).not.toBe(true);
+});
+
+test("is ISSN", () => {
+  expect(isClass(ValidateIsClass, { ISSN: "0317-8471" })).toBe(true);
+  expect(isClass(ValidateIsClass, { ISSN: 'hello' })).not.toBe(true);
+});
+
+test("is ISIN", () => {
+  expect(isClass(ValidateIsClass, { ISIN: "US5949181045" })).toBe(true);
+  expect(isClass(ValidateIsClass, { ISIN: 'hello' })).not.toBe(true);
+});
+
+test("is ISO8601", () => {
+  expect(isClass(ValidateIsClass, { ISO8601: "2008-09-15T15:53:00" })).toBe(true);
+  expect(isClass(ValidateIsClass, { ISO8601: 'hello' })).not.toBe(true);
+});
+
+test("is ISO31661Alpha2", () => {
+  expect(isClass(ValidateIsClass, { ISO31661Alpha2: "CN" })).toBe(true);
+  expect(isClass(ValidateIsClass, { ISO31661Alpha2: 'hello' })).not.toBe(true);
+});
+
+test("is ISRC", () => {
+  // expect(isClass(ValidateIsClass, { ISRC: "GB-LFP-16-12345" })).toBe(true);
+  expect(isClass(ValidateIsClass, { ISRC: 'hello' })).not.toBe(true);
+});
+
+test("is JSON", () => {
+  expect(isClass(ValidateIsClass, { JSON: '{"a": "1"}' })).toBe(true);
+  expect(isClass(ValidateIsClass, { JSON: '{hello}' })).not.toBe(true);
+});
+
+test("is latLong", () => {
+  // expect(isClass(ValidateIsClass, { latLong: '37.762030' })).toBe(true);
+  expect(isClass(ValidateIsClass, { latLong: '100000' })).not.toBe(true);
+});
+
+test("is length", () => {
+  expect(isClass(ValidateIsClass, { length: 'hel' })).toBe(true);
+  expect(isClass(ValidateIsClass, { length: 'hello' })).not.toBe(true);
+});
+
+test("is lowercase", () => {
+  expect(isClass(ValidateIsClass, { lowercase: 'hello' })).toBe(true);
+  expect(isClass(ValidateIsClass, { lowercase: 'Hello' })).not.toBe(true);
+});
+
+test("is MACAddress", () => {
+  expect(isClass(ValidateIsClass, { MACAddress: '00:0a:95:9d:68:16' })).toBe(true);
+  expect(isClass(ValidateIsClass, { MACAddress: 'Hello' })).not.toBe(true);
+});
+
+test("is MD5", () => {
+  expect(isClass(ValidateIsClass, { MD5: '5d41402abc4b2a76b9719d911017c592' })).toBe(true);
+  expect(isClass(ValidateIsClass, { MD5: 'Hello' })).not.toBe(true);
+});
+
+test("is mimeType", () => {
+  expect(isClass(ValidateIsClass, { mimeType: 'application/json' })).toBe(true);
+  expect(isClass(ValidateIsClass, { mimeType: 'Hello' })).not.toBe(true);
+});
+
+test("is mobilePhone", () => {
+  expect(isClass(ValidateIsClass, { mobilePhone: '13098971005' })).toBe(true);
+  expect(isClass(ValidateIsClass, { mobilePhone: 'Hello' })).not.toBe(true);
+});
+
+test("is mongoId", () => {
+  expect(isClass(ValidateIsClass, { mongoId: '507f191e810c19729de860ea' })).toBe(true);
+  expect(isClass(ValidateIsClass, { mongoId: 'Hello' })).not.toBe(true);
 });
 
 test("is port", () => {
