@@ -182,6 +182,48 @@ class ValidateIsClass {
   @validate(is.mongoId())
   public mongoId: string;
 
+  @validate(is.multibyte())
+  public multibyte: string;
+
+  @validate(is.numeric())
+  public numeric: string;
+
+  @validate(is.postalCode('US'))
+  public postalCode: string;
+
+  @validate(is.surrogatePair())
+  public surrogatePair: string;
+
+  @validate(is.URL())
+  public URL: string;
+
+  @validate(is.UUID())
+  public UUID: string;
+
+  @validate(is.uppercase())
+  public uppercase: string;
+
+  @validate(is.variableWidth())
+  public UvariableWidthUID: string;
+
+  @validate(is.whitelisted('hello'))
+  public whitelisted: string;
+
+  @validate(is.matches('hello'))
+  public matches: string;
+
+  @validate(is.decimal())
+  public decimal: string;
+
+  @validate(is.divisibleBy(2))
+  public divisibleBy: string;
+
+  @validate(is.float())
+  public float: string;
+
+  @validate(is.int())
+  public int: string;
+
   @validate(is.port())
   public port: string;
 
@@ -369,6 +411,75 @@ test("is mobilePhone", () => {
 test("is mongoId", () => {
   expect(isClass(ValidateIsClass, { mongoId: '507f191e810c19729de860ea' })).toBe(true);
   expect(isClass(ValidateIsClass, { mongoId: 'Hello' })).not.toBe(true);
+});
+
+test("is multibyte", () => {
+  expect(isClass(ValidateIsClass, { multibyte: '你好' })).toBe(true);
+  expect(isClass(ValidateIsClass, { multibyte: 'Hello' })).not.toBe(true);
+});
+
+test("is numeric", () => {
+  expect(isClass(ValidateIsClass, { numeric: '123456' })).toBe(true);
+  expect(isClass(ValidateIsClass, { numeric: 'Hello' })).not.toBe(true);
+});
+
+test("is postalCode", () => {
+  expect(isClass(ValidateIsClass, { postalCode: '03217' })).toBe(true);
+  expect(isClass(ValidateIsClass, { postalCode: '100000' })).not.toBe(true);
+});
+
+test("is surrogatePair", () => {
+  expect(isClass(ValidateIsClass, { surrogatePair: '\uD869\uDEA5' })).toBe(true);
+  expect(isClass(ValidateIsClass, { surrogatePair: 'Hello' })).not.toBe(true);
+});
+
+test("is URL", () => {
+  expect(isClass(ValidateIsClass, { URL: 'http://www.360.com' })).toBe(true);
+  expect(isClass(ValidateIsClass, { URL: 'Hello' })).not.toBe(true);
+});
+
+test("is UUID", () => {
+  expect(isClass(ValidateIsClass, { UUID: 'c8f4b706-3f5e-4055-a81a-fcda90536f40' })).toBe(true);
+  expect(isClass(ValidateIsClass, { UUID: '100000' })).not.toBe(true);
+});
+
+test("is uppercase", () => {
+  expect(isClass(ValidateIsClass, { uppercase: 'ABCD' })).toBe(true);
+  expect(isClass(ValidateIsClass, { uppercase: 'Abcd' })).not.toBe(true);
+});
+
+test("is variableWidth", () => {
+  expect(isClass(ValidateIsClass, { variableWidth: 'hello，' })).toBe(true);
+});
+
+test("is whitelisted", () => {
+  expect(isClass(ValidateIsClass, { whitelisted: 'hello' })).toBe(true);
+  expect(isClass(ValidateIsClass, { whitelisted: 'Hello1' })).not.toBe(true);
+});
+
+test("is matches", () => {
+  expect(isClass(ValidateIsClass, { matches: 'hello,world' })).toBe(true);
+  expect(isClass(ValidateIsClass, { matches: 'world' })).not.toBe(true);
+});
+
+test("is decimal", () => {
+  expect(isClass(ValidateIsClass, { decimal: '1.2' })).toBe(true);
+  expect(isClass(ValidateIsClass, { decimal: '你好' })).not.toBe(true);
+});
+
+test("is divisibleBy", () => {
+  expect(isClass(ValidateIsClass, { divisibleBy: '4' })).toBe(true);
+  expect(isClass(ValidateIsClass, { divisibleBy: '3' })).not.toBe(true);
+});
+
+test("is float", () => {
+  expect(isClass(ValidateIsClass, { float: '1.2' })).toBe(true);
+  expect(isClass(ValidateIsClass, { float: '你好' })).not.toBe(true);
+});
+
+test("is int", () => {
+  expect(isClass(ValidateIsClass, { int: '4' })).toBe(true);
+  expect(isClass(ValidateIsClass, { int: '3.3' })).not.toBe(true);
 });
 
 test("is port", () => {
