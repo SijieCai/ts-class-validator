@@ -21,7 +21,8 @@
         "eofline": false,
         "quotemark": false,
         "variable-name": false,
-        "triple-equals": false
+        "triple-equals": false,
+        "callable-types": false
     },
     "rulesDirectory": []
 }
