@@ -455,11 +455,11 @@ export class RuleCreator {
   }
 
   // ===
-  public tribleEquals(comparison: any): Rule {
+  public tripleEquals(comparison: any): Rule {
     return new Rule(
       this.proxyCall((target, key) => target[key] === comparison)
     ).message(
-      this.proxyGetLocaleMessage("tribleEquals", comparison)
+      this.proxyGetLocaleMessage("tripleEquals", comparison)
     );
   }
 
@@ -751,7 +751,7 @@ const LocaleErrorMessages = {
     is: (target: object, key: string, ...rest: any[]) => `${target[key]} == ${rest[0]}`,
     not: (target: object, key: string, ...rest: any[]) => `${target[key]} != ${rest[0]}`,
   },
-  tribleEquals: {
+  tripleEquals: {
     is: (target: object, key: string, ...rest: any[]) => `${target[key]} === ${rest[0]}`,
     not: (target: object, key: string, ...rest: any[]) => `${target[key]} !== ${rest[0]}`,
   },
