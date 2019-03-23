@@ -1,19 +1,19 @@
 {
   "name": "ts-class-validator",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "description": "Declarative typescript validator with nested logic operator support.",
   "main": "dist/index.js",
+  "types": "dist/index.d.ts",
   "scripts": {
     "test": "jest --coverage",
-    "build": "tsc -d src/index.ts --declarationDir ./ --outDir dist",
+    "build": "tsc -d src/index.ts --outDir dist",
     "lint": "tslint \"src/**/*.ts\"",
     "lint-fix": "tslint --fix \"src/**/*.ts\"",
     "prepublish": "npm run lint && npm run build"
   },
   "files": [
     "dist",
-    "src",
-    "index.d.ts"
+    "src"
   ],
   "husky": {
     "hooks": {
