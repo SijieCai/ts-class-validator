@@ -8,6 +8,7 @@
         "suppressImplicitAnyIndexErrors": true,
         "experimentalDecorators": true,
         "emitDecoratorMetadata": true,
+        "declaration": true,
         "sourceMap": false,
         "outDir": "dist",
         "baseUrl": "."
